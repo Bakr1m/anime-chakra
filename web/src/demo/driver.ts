@@ -22,10 +22,6 @@ const FIXTURES: Record<string, FixtureDoc> = {
   kurama: fistFx as FixtureDoc,
 };
 
-export function demoIds(): string[] {
-  return Object.keys(FIXTURES);
-}
-
 /** remap synth units (~+/-220) into normalized video coords with a margin */
 export function demoHands(id: string, time: number): Landmark[][] {
   const doc = FIXTURES[id];

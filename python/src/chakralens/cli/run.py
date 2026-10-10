@@ -21,8 +21,6 @@ def run_command(
     """Open the webcam, recognize the four core signs, render chakra effects."""
     import cv2
 
-    if "headless" in cv2.__version__ or not hasattr(cv2, "imshow"):
-        pass  # imshow check below raises a friendly error instead
     from chakralens.capture.capture import ThreadedCamera
     from chakralens.gestures.rules import classify, load_spec
     from chakralens.gestures.state_machine import JutsuState
