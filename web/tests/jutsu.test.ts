@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { demoHands, demoBackground } from '../src/demo/driver';
+import { classify } from '../src/gestures/rules';
+import { getSpec } from '../src/gestures/spec';
 import { buildBolt } from '../src/jutsu/chidori/lightning';
 import { mulberry32 } from '../src/render/clock';
 
@@ -39,6 +41,18 @@ describe('demo driver', () => {
     }
     expect(t0).not.toEqual(t1);
     expect(demoHands('nope', 0)).toEqual([]);
+  });
+
+  it('demo hands classify as their jutsu (joint normalization)', () => {
+    const spec = getSpec();
+    for (const [id, want] of [
+      ['rasengan', 'rasengan'],
+      ['chidori', 'chidori'],
+      ['katon', 'katon'],
+      ['bunshin', 'bunshin'],
+    ] as const) {
+      expect(classify(demoHands(id, 1.0), spec)[0], id).toBe(want);
+    }
   });
 
   it('builds a background texture', () => {

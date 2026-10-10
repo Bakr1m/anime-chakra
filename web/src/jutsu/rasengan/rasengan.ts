@@ -33,15 +33,17 @@ const FRAG = /* glsl */ `
     float fresnel = pow(1.0 - r, 1.5);
     float body = smoothstep(1.0, 0.15, r);
     float streaks = smoothstep(0.35, 0.9, spiral) * body;
+    float lanes = smoothstep(0.6, 0.15, spiral) * body;
     vec3 white = vec3(1.0, 1.0, 1.0);
     vec3 mid = vec3(0.31, 0.76, 1.0);   // #4FC3FF
     vec3 edge = vec3(0.08, 0.39, 0.75); // #1565C0
     vec3 col = mix(edge, mid, body);
-    col = mix(col, white, pow(fresnel, 2.0) * 0.9 + streaks * 0.35);
-    col += vec3(0.2, 0.5, 1.0) * shell * 0.35 * body;
+    col = mix(col, edge * 0.45, lanes * 0.65); // dark spiral lanes
+    col = mix(col, white, pow(fresnel, 4.0) * 0.7 + streaks * 0.18); // tight hot core
+    col += vec3(0.2, 0.5, 1.0) * shell * 0.3 * body;
     float pulse = 0.85 + 0.15 * sin(uTime * 9.0) * (1.0 - uCharge);
-    float alpha = clamp(body * 1.15 + streaks * 0.5 + fresnel * 0.35, 0.0, 1.0) * pulse;
-    gl_FragColor = vec4(col * alpha * (0.6 + 0.9 * uCharge), alpha);
+    float alpha = clamp(body * 1.1 + streaks * 0.4 + fresnel * 0.3, 0.0, 1.0) * pulse;
+    gl_FragColor = vec4(col * alpha * (0.45 + 0.4 * uCharge), alpha);
   }
 `;
 
@@ -52,7 +54,7 @@ const LIGHT_FRAG = /* glsl */ `
   void main() {
     vec2 c = vUv - 0.5;
     float r = length(c) * 2.0;
-    float glow = pow(max(0.0, 1.0 - r), 2.2) * 0.5 * uCharge;
+    float glow = pow(max(0.0, 1.0 - r), 2.4) * 0.12 * uCharge;
     gl_FragColor = vec4(vec3(0.25, 0.55, 1.0) * glow, glow);
   }
 `;
@@ -80,6 +82,7 @@ export class Rasengan implements Jutsu {
       },
       transparent: true,
       depthWrite: false,
+      side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
     });
     const ball = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.mat);
@@ -91,6 +94,7 @@ export class Rasengan implements Jutsu {
       uniforms: { uCharge: { value: 0 } },
       transparent: true,
       depthWrite: false,
+      side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
     });
     const light = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.lightMat);
@@ -121,17 +125,20 @@ export class Rasengan implements Jutsu {
     this.wobble.y += this.wobble.vy * dt;
 
     const radius = anchor.size * 0.9 * (0.7 + 0.3 * charge);
-    this.group.position.set(this.wobble.x, this.wobble.y, 1);
+    this.group.position.set(this.wobble.x, this.wobble.y - anchor.size * 0.35, 1);
     this.group.scale.set(radius * 2, radius * 2, 1);
     this.mat.uniforms['uTime']!.value = time;
     this.mat.uniforms['uCharge']!.value = charge;
     this.lightMat.uniforms['uCharge']!.value = charge;
     const light = this.group.children[1] as THREE.Mesh;
-    light.scale.set(3.2, 3.2, 1);
+    light.scale.set(1.8, 1.8, 1);
 
     // orbiting particles on tight shells + a few tangential wisps
     const budget = Math.floor((250 + 150 * charge) * ctx.quality.particleScale);
-    const spawn = Math.min(budget - ctx.particles.alive, Math.ceil(240 * dt * ctx.quality.particleScale) + 1);
+    const spawn = Math.min(
+      Math.max(0, budget - ctx.particles.alive),
+      Math.ceil(120 * dt * ctx.quality.particleScale) + 1,
+    );
     for (let i = 0; i < spawn; i++) {
       const a = ctx.rng() * Math.PI * 2;
       const rr = radius * (0.75 + ctx.rng() * 0.45);
@@ -142,9 +149,9 @@ export class Rasengan implements Jutsu {
         vx: -Math.sin(a) * rr * speed,
         vy: Math.cos(a) * rr * speed,
         life: 0.5 + ctx.rng() * 0.5,
-        size: 3 + ctx.rng() * 5,
-        r: 0.45,
-        g: 0.78,
+        size: 1.5 + ctx.rng() * 2.5,
+        r: 0.4,
+        g: 0.7,
         b: 1.0,
       });
     }

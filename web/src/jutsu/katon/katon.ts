@@ -75,6 +75,10 @@ export class Katon implements Jutsu {
     // fires on release (charged hold complete); nothing at seal time
   }
 
+  get alive(): number {
+    return this.balls.length;
+  }
+
   /** called by the manager when the hold completes */
   fire(ctx: JutsuContext, anchor: EffectAnchor): void {
     if (!this.attached) {
@@ -91,6 +95,7 @@ export class Katon implements Jutsu {
       uniforms: { uTime: { value: 0 }, uGrow: { value: 0 } },
       transparent: true,
       depthWrite: false,
+      side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
@@ -101,6 +106,7 @@ export class Katon implements Jutsu {
       uniforms: { uIntensity: { value: 0.8 } },
       transparent: true,
       depthWrite: false,
+      side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
     });
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat);

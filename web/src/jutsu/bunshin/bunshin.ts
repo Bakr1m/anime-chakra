@@ -45,7 +45,7 @@ export const CLONE_FRAG = /* glsl */ `
     vec4 vid = texture2D(uVideo, uv);
     float m = texture2D(uMask, uv).r;
     float gray = dot(vid.rgb, vec3(0.33));
-    vec3 col = mix(vid.rgb, vec3(gray), 0.25) * uOpacity;
+    vec3 col = mix(vid.rgb, vec3(gray), 0.25) * uOpacity * 1.15;
     float a = m * uOpacity * (1.0 - uDissolve);
     gl_FragColor = vec4(col * a, a);
   }
@@ -93,7 +93,7 @@ export class KageBunshin implements Jutsu {
     const H = ctx.renderer.height;
     const videoTex = ctx.renderer.videoTexture;
     for (const side of [-1.6, 1.6]) {
-      this.spawnPoof(anchor.x + side * anchor.size, anchor.y, anchor.size * 2.2);
+      this.spawnPoof(anchor.x + side * anchor.size, anchor.y, anchor.size * 2.6);
       if (videoTex) {
         const mat = new THREE.ShaderMaterial({
           vertexShader: POOF_VERT,
@@ -103,12 +103,13 @@ export class KageBunshin implements Jutsu {
             uMask: { value: this.maskTex },
             uRepeat: { value: new THREE.Vector2(1, 1) },
             uBaseOffset: { value: new THREE.Vector2(0, 0) },
-            uShift: { value: new THREE.Vector2(side * 0.1, 0) },
+            uShift: { value: new THREE.Vector2(side * 0.18, 0) },
             uOpacity: { value: 0.85 },
             uDissolve: { value: 0 },
           },
           transparent: true,
           depthWrite: false,
+          side: THREE.DoubleSide,
         });
         const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat);
         mesh.position.set(W / 2, H / 2, 0);
@@ -126,6 +127,7 @@ export class KageBunshin implements Jutsu {
       uniforms: { uTime: { value: 0 }, uLife: { value: 1 } },
       transparent: true,
       depthWrite: false,
+      side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mat);
@@ -139,7 +141,7 @@ export class KageBunshin implements Jutsu {
     this.history.push({ t: time, x: anchor.x });
     if (this.history.length > 60) this.history.shift();
     for (const p of [...this.poofs]) {
-      p.life -= dt * 1.6;
+      p.life -= dt * 0.45;
       p.mat.uniforms['uLife']!.value = Math.max(0, p.life);
       p.mat.uniforms['uTime']!.value = time;
       const s = p.size * (1.4 - 0.4 * Math.max(0, p.life));
@@ -153,6 +155,7 @@ export class KageBunshin implements Jutsu {
     }
     const tr = ctx.renderer.videoTransform;
     for (const c of this.clones) {
+      if (this.maskTex) c.mat.uniforms['uMask']!.value = this.maskTex;
       (c.mat.uniforms['uRepeat']!.value as THREE.Vector2).set(tr.repeat[0], tr.repeat[1]);
       (c.mat.uniforms['uBaseOffset']!.value as THREE.Vector2).set(tr.offset[0], tr.offset[1]);
       // lagged horizontal parallax from the anchor history
@@ -166,7 +169,7 @@ export class KageBunshin implements Jutsu {
         }
       }
       const parallax = (anchor.x - hx) / Math.max(1, ctx.renderer.width);
-      (c.mat.uniforms['uShift']!.value as THREE.Vector2).set(c.side * 0.1 - parallax * 0.5, 0);
+      (c.mat.uniforms['uShift']!.value as THREE.Vector2).set(c.side * 0.18 - parallax * 0.5, 0);
       const age = time - c.born;
       if (age > 5) {
         c.mat.uniforms['uDissolve']!.value = Math.min(1, (age - 5) / 0.6);

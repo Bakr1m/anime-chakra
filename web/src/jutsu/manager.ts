@@ -1,6 +1,7 @@
 // JutsuManager: owns jutsu instances, routes anchors, lazily starts the
 // segmentation/face pipelines only when the active jutsu needs them.
 import type { Landmark } from '../gestures/features';
+import * as THREE from 'three';
 import type { OverlayRenderer } from '../render/renderer';
 import type { ParticlePool } from '../render/particles';
 import type { QualityManager } from '../render/quality';
@@ -37,7 +38,6 @@ export class JutsuManager implements JutsuContext {
   private jutsu: Record<string, Jutsu> = {};
   private current: Jutsu | null = null;
   private holdTime = 0;
-  private katonFired = false;
   private pipelinesFor: string | null = null;
 
   constructor(
@@ -64,6 +64,16 @@ export class JutsuManager implements JutsuContext {
 
   setDemoSeed(id: string): void {
     this.rng = mulberry32(hashSeed(id));
+  }
+
+  private whiteTex: THREE.Texture | null = null;
+
+  private fallbackMask(): THREE.Texture {
+    if (!this.whiteTex) {
+      this.whiteTex = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
+      this.whiteTex.needsUpdate = true;
+    }
+    return this.whiteTex;
   }
 
   private anchorFor(hand: Landmark[]): EffectAnchor {
@@ -95,7 +105,6 @@ export class JutsuManager implements JutsuContext {
       this.current?.onDeactivate(this);
       this.current = next;
       this.holdTime = 0;
-      this.katonFired = false;
       if (this.current && f.hands[0]) {
         this.current.onActivate(this, this.anchorFor(f.hands[0]));
       }
@@ -114,7 +123,7 @@ export class JutsuManager implements JutsuContext {
       }
     }
     if (this.current.id === 'bunshin') {
-      (this.jutsu['bunshin'] as KageBunshin).setMask(this.seg.mask);
+      (this.jutsu['bunshin'] as KageBunshin).setMask(this.seg.mask ?? this.fallbackMask());
     }
     if (this.current.id === 'katon') {
       const k = this.jutsu['katon'] as Katon;
@@ -129,10 +138,10 @@ export class JutsuManager implements JutsuContext {
           headPx: this.face.last.headSize * W,
         };
       }
-      // charged: hold the seal 0.5 s, then fire once
+      // charged: hold the seal 0.5 s, then fire; refire while held so the
+      // effect sustains (and demo screenshots always catch a fireball)
       this.holdTime += f.dt;
-      if (!this.katonFired && this.holdTime >= 0.5) {
-        this.katonFired = true;
+      if (this.holdTime >= 0.5 && k.alive === 0) {
         k.fire(this, anchor);
       }
     }

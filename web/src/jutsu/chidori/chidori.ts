@@ -16,6 +16,8 @@ export class Chidori implements Jutsu {
   private glowMat: THREE.LineBasicMaterial;
   private coreLines: THREE.Line[] = [];
   private glowLines: THREE.Line[] = [];
+  private coreMat2: THREE.ShaderMaterial;
+  private coreQuad: THREE.Mesh;
   private frame = 0;
   private seed = 1;
   private attached = false;
@@ -31,10 +33,28 @@ export class Chidori implements Jutsu {
     this.glowMat = new THREE.LineBasicMaterial({
       color: 0x4da3ff,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.65,
       blending: THREE.AdditiveBlending,
       depthTest: false,
     });
+    // hot glowing core: soft radial sprite at the palm
+    this.coreMat2 = new THREE.ShaderMaterial({
+      vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `precision highp float; varying vec2 vUv; uniform float uCharge;
+        void main() {
+          float r = length(vUv - 0.5) * 2.0;
+          float g = pow(max(0.0, 1.0 - r), 2.6) * (0.5 + 0.5 * uCharge);
+          gl_FragColor = vec4(vec3(0.75, 0.91, 1.0) * g, g);
+        }`,
+      uniforms: { uCharge: { value: 0 } },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    });
+    this.coreQuad = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.coreMat2);
+    this.coreQuad.frustumCulled = false;
+    this.group.add(this.coreQuad);
     this.group.visible = false;
   }
 
@@ -73,6 +93,10 @@ export class Chidori implements Jutsu {
     }
     ctx.renderer.addFlash(0.06 * charge, 0x4da3ff);
     ctx.renderer.addShake(2.5 * charge);
+    this.coreMat2.uniforms['uCharge']!.value = charge;
+    const s = anchor.size * 1.1;
+    this.coreQuad.position.set(anchor.x, anchor.y, 1);
+    this.coreQuad.scale.set(s, s, 1);
   }
 
   private rebuild(_ctx: JutsuContext, charge: number, anchor: EffectAnchor): void {
