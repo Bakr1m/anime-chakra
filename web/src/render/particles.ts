@@ -19,14 +19,15 @@ const VERT = /* glsl */ `
   attribute float aSize;
   attribute vec3 aColor;
   attribute float aAlpha;
+  uniform float uPixelRatio;
   varying vec3 vColor;
   varying float vAlpha;
   void main() {
     vColor = aColor;
     vAlpha = aAlpha;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = aSize * (300.0 / -mv.z);
-    gl_Position = projectionMatrix * mv;
+    // orthographic pixel-space frustum: point size is literal pixels
+    gl_PointSize = aSize * uPixelRatio;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
 
@@ -77,6 +78,7 @@ export class ParticlePool {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: FRAG,
+      uniforms: { uPixelRatio: { value: 1 } },
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -147,6 +149,10 @@ export class ParticlePool {
   clear(): void {
     this.count = 0;
     this.geo.setDrawRange(0, 0);
+  }
+
+  setPixelRatio(pr: number): void {
+    this.mat.uniforms['uPixelRatio']!.value = pr;
   }
 
   dispose(): void {
