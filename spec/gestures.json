@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "notes": "Single source of truth. Thresholds shared by web (TS) and python. Never hard-code these twice.",
+  "reliability": {
+    "activateFrames": 6,
+    "releaseFrames": 8,
+    "minConfidence": 0.75,
+    "disagreeMinConfidence": 0.9,
+    "chargeSeconds": 0.6,
+    "twoHandPriority": true
+  },
+  "jutsu": [
+    {
+      "id": "rasengan",
+      "displayName": "Rasengan",
+      "character": "Naruto Uzumaki",
+      "hands": 1,
+      "needsSegmentation": false,
+      "needsFace": false,
+      "kind": "sustain",
+      "cooldownSeconds": 1.0,
+      "colors": { "core": "#FFFFFF", "mid": "#4FC3FF", "edge": "#1565C0" },
+      "rules": {
+        "opennessMin": 0.4,
+        "opennessMax": 0.75,
+        "spreadMax": 0.45,
+        "palmToCameraMin": 0.5,
+        "allFingersSemiCurled": true
+      }
+    },
+    {
+      "id": "chidori",
+      "displayName": "Chidori",
+      "character": "Sasuke Uchiha / Kakashi Hatake",
+      "hands": 1,
+      "needsSegmentation": false,
+      "needsFace": false,
+      "kind": "sustain",
+      "cooldownSeconds": 1.0,
+      "colors": { "core": "#BFE9FF", "mid": "#4DA3FF", "edge": "#7C4DFF" },
+      "rules": {
+        "fourFingersExtendedMin": 0.8,
+        "thumbTuckedMax": 0.45,
+        "fingerSpreadMax": 0.35,
+        "pointingHorizontalMin": 0.5
+      }
+    },
+    {
+      "id": "katon",
+      "displayName": "Katon: Gokakyu no Jutsu",
+      "character": "Sasuke Uchiha / Itachi Uchiha",
+      "hands": 2,
+      "needsSegmentation": false,
+      "needsFace": true,
+      "kind": "charged",
+      "holdSeconds": 0.5,
+      "cooldownSeconds": 4.0,
+      "colors": { "core": "#FFFFFF", "mid": "#FFB300", "edge": "#FF6A00", "smoke": "#1A1A1A" },
+      "rules": {
+        "wristDistanceMax": 1.6,
+        "indexMiddleExtendedMin": 0.75,
+        "ringPinkyFoldedMax": 0.45,
+        "pointingUpMin": 0.5
+      }
+    },
+    {
+      "id": "bunshin",
+      "displayName": "Kage Bunshin no Jutsu",
+      "character": "Naruto Uzumaki",
+      "hands": 2,
+      "needsSegmentation": true,
+      "needsFace": false,
+      "kind": "oneshot",
+      "cooldownSeconds": 6.0,
+      "colors": { "core": "#FFFFFF", "mid": "#ECEFF1", "edge": "#90A4AE" },
+      "rules": {
+        "bothHandsIndexMiddleExtendedMin": 0.7,
+        "fingerLinesCross": true,
+        "crossAngleMinDeg": 20.0,
+        "crossAngleMaxDeg": 160.0
+      }
+    },
+    {
+      "id": "sharingan",
+      "displayName": "Sharingan",
+      "character": "Sasuke Uchiha / Kakashi Hatake",
+      "hands": 1,
+      "needsSegmentation": false,
+      "needsFace": true,
+      "kind": "sustain",
+      "stretch": true,
+      "webOnly": true,
+      "cooldownSeconds": 1.0,
+      "colors": { "core": "#D50000", "mid": "#8B0000", "edge": "#000000" },
+      "rules": { "indexTipNearEyeMax": 1.2 }
+    },
+    {
+      "id": "kurama",
+      "displayName": "Kurama Cloak",
+      "character": "Naruto Uzumaki",
+      "hands": 2,
+      "needsSegmentation": true,
+      "needsFace": false,
+      "kind": "sustain",
+      "stretch": true,
+      "webOnly": true,
+      "cooldownSeconds": 2.0,
+      "colors": { "core": "#FFD54F", "mid": "#FF8F00", "edge": "#E65100" },
+      "rules": { "bothFistsClenched": true, "handsAboveShoulders": true }
+    }
+  ]
+}
