@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChakraLensLandmarkSample",
+  "description": "One labelled landmark sample. Produced by the web recorder, chakralens record, and chakralens extract.",
+  "type": "object",
+  "required": ["version", "label", "source", "landmarks"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "label": {
+      "type": "string",
+      "enum": ["rasengan", "chidori", "katon", "bunshin", "sharingan", "kurama", "none", "other"]
+    },
+    "source": { "type": "string", "description": "e.g. web-recorder, desktop-record, video-extract, synthetic" },
+    "capturedAt": { "type": "string", "format": "date-time" },
+    "video": { "type": "string" },
+    "frameIndex": { "type": "integer", "minimum": 0 },
+    "landmarks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["handedness", "points"],
+        "properties": {
+          "handedness": { "type": "string", "enum": ["Left", "Right"] },
+          "points": {
+            "type": "array",
+            "minItems": 21,
+            "maxItems": 21,
+            "items": {
+              "type": "object",
+              "required": ["x", "y", "z"],
+              "properties": {
+                "x": { "type": "number" },
+                "y": { "type": "number" },
+                "z": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
