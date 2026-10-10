@@ -38,11 +38,15 @@ def validate_sample(doc: dict) -> list[str]:
         problems.append("landmarks must be a list of 1-2 hands")
         return problems
     for hand in hands:
-        if not isinstance(hand, list) or len(hand) != 21:
+        if not isinstance(hand, dict):
+            problems.append("each hand needs handedness + points")
+            return problems
+        points = hand.get("points")
+        if not isinstance(points, list) or len(points) != 21:
             problems.append("each hand needs 21 landmarks")
             return problems
-        for p in hand:
-            if not all(k in p for k in ("x", "y", "z")):
+        for p in points:
+            if not isinstance(p, dict) or not all(k in p for k in ("x", "y", "z")):
                 problems.append("landmark needs x/y/z")
                 return problems
     return problems
@@ -63,7 +67,9 @@ def sample_to_training(doc: dict) -> tuple[list[float], str] | None:
         return None
     hands = doc["landmarks"]
     assert isinstance(hands, list)
-    return (normalize(hands[0]), label)
+    first = hands[0]
+    assert isinstance(first, dict)
+    return (normalize(first["points"]), label)
 
 
 def load_dir(data_dir: Path) -> tuple[list[list[float]], list[str]]:
