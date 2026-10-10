@@ -17,12 +17,21 @@ export class OverlayRenderer {
   private videoTex: THREE.Texture | null = null;
   private videoQuad: THREE.Mesh | null = null;
   private flashMat: THREE.MeshBasicMaterial;
+  private flashMesh: THREE.Mesh;
   private shake = 0;
   private W = 1280;
   private H = 720;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+    const demo = typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo');
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: false,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: demo,
+    });
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
     this.camera = new THREE.OrthographicCamera(0, this.W, 0, this.H, -10, 10);
     this.camera.position.set(0, 0, 5);
     this.scene.add(this.fx);
@@ -32,16 +41,17 @@ export class OverlayRenderer {
       opacity: 0,
       blending: THREE.AdditiveBlending,
       depthTest: false,
+      side: THREE.DoubleSide,
     });
-    const flash = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.flashMat);
-    flash.position.set(0.5, 0.5, 9);
-    flash.scale.set(2, 2, 1);
-    flash.frustumCulled = false;
-    this.scene.add(flash);
+    this.flashMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.flashMat);
+    this.flashMesh.position.set(this.W / 2, this.H / 2, 9);
+    this.flashMesh.scale.set(this.W, this.H, 1);
+    this.flashMesh.frustumCulled = false;
+    this.scene.add(this.flashMesh);
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(this.W, this.H), 0.9, 0.55, 0.12);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(this.W, this.H), 0.45, 0.35, 0.65);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
     this.resize(this.W, this.H);
@@ -56,14 +66,14 @@ export class OverlayRenderer {
   /** demo/headless path: attach any texture as the background */
   attachTexture(tex: THREE.Texture, vw: number, vh: number): void {
     this.videoTex = tex;
-    const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+    const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, side: THREE.DoubleSide });
     if (this.videoQuad) {
       this.scene.remove(this.videoQuad);
       (this.videoQuad.material as THREE.Material).dispose();
       this.videoQuad.geometry.dispose();
     }
     this.videoQuad = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
-    this.videoQuad.position.set(0.5, 0.5, -5);
+    this.videoQuad.position.set(this.W / 2, this.H / 2, -5);
     this.videoQuad.frustumCulled = false;
     this.scene.add(this.videoQuad);
     this.layoutVideo(vw, vh);
@@ -93,12 +103,19 @@ export class OverlayRenderer {
     this.renderer.setSize(this.W, this.H, false);
     this.composer.setPixelRatio(pixelRatio);
     this.composer.setSize(this.W, this.H);
+    // y-down screen space: world y=0 is the top of the screen, matching
+    // MediaPipe normalized coords (y down) used by every anchor and effect
     this.camera.left = 0;
     this.camera.right = this.W;
-    this.camera.top = this.H;
-    this.camera.bottom = 0;
+    this.camera.top = 0;
+    this.camera.bottom = this.H;
     this.camera.updateProjectionMatrix();
-    if (this.videoQuad) this.videoQuad.scale.set(this.W, this.H, 1);
+    if (this.videoQuad) {
+      this.videoQuad.scale.set(this.W, this.H, 1);
+      this.videoQuad.position.set(this.W / 2, this.H / 2, -5);
+    }
+    this.flashMesh.position.set(this.W / 2, this.H / 2, 9);
+    this.flashMesh.scale.set(this.W, this.H, 1);
   }
 
   setBloomEnabled(on: boolean): void {
@@ -107,7 +124,9 @@ export class OverlayRenderer {
 
   addFlash(amount: number, color = 0xffffff): void {
     this.flashMat.color.setHex(color);
-    this.flashMat.opacity = Math.min(1, this.flashMat.opacity + amount);
+    // set-max (not accumulate): callers pass an instantaneous level every
+    // frame, so high-fps machines cannot ratchet to a stuck white screen
+    this.flashMat.opacity = Math.min(1, Math.max(this.flashMat.opacity, amount));
   }
 
   addShake(px: number): void {
@@ -115,7 +134,7 @@ export class OverlayRenderer {
   }
 
   render(dt: number): void {
-    this.flashMat.opacity = Math.max(0, this.flashMat.opacity - dt * 3);
+    this.flashMat.opacity = Math.max(0, this.flashMat.opacity - dt * 6);
     if (this.shake > 0.05) {
       this.camera.position.x = (Math.random() - 0.5) * 2 * this.shake;
       this.camera.position.y = (Math.random() - 0.5) * 2 * this.shake;
