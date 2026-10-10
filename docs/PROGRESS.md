@@ -9,7 +9,7 @@
 - [x] Phase 6: web rendering core
 - [x] Phase 7: web jutsu
 - [x] Phase 8: visual QA
-- [ ] Phase 9: python renderer + CLI
+- [x] Phase 9: python renderer + CLI
 - [ ] Phase 10: ML + real-data tooling
 - [ ] Phase 11: stretch + polish
 - [ ] Phase 12: containers + phone
