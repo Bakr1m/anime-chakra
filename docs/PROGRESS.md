@@ -11,7 +11,7 @@
 - [x] Phase 8: visual QA
 - [x] Phase 9: python renderer + CLI
 - [x] Phase 10: ML + real-data tooling
-- [ ] Phase 11: stretch + polish
+- [x] Phase 11: stretch + polish
 - [ ] Phase 12: containers + phone
 - [ ] Phase 13: CI/CD + docs
 - [ ] Phase 14: ship
