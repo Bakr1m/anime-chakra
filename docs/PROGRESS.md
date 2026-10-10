@@ -12,6 +12,6 @@
 - [x] Phase 9: python renderer + CLI
 - [x] Phase 10: ML + real-data tooling
 - [x] Phase 11: stretch + polish
-- [ ] Phase 12: containers + phone
+- [x] Phase 12: containers + phone
 - [ ] Phase 13: CI/CD + docs
 - [ ] Phase 14: ship
