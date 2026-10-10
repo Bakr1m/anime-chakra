@@ -94,3 +94,58 @@ jobs:
             web/playwright-report/
             web/test-results/
             docs/img/demo-*.png
+
+  docker:
+    needs: [web, python, parity, e2e]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - { dockerfile: docker/web.Dockerfile, name: anime-chakra, smoke: web }
+          - { dockerfile: docker/lab.Dockerfile, name: anime-chakra-lab, smoke: lab }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image.name }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.image.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: smoke test (web)
+        if: matrix.image.smoke == 'web'
+        run: |
+          docker run -d --rm -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest
+          sleep 5
+          curl -fsS http://127.0.0.1:8080/healthz
+          curl -fsS http://127.0.0.1:8080/ -o /dev/null
+      - name: smoke test (lab)
+        if: matrix.image.smoke == 'lab'
+        run: |
+          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest --help
+          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest evaluate --n-per-class 10
