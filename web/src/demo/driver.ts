@@ -27,30 +27,35 @@ export function demoIds(): string[] {
 export function demoHands(id: string, time: number): Landmark[][] {
   const doc = FIXTURES[id];
   if (!doc) return [];
-  return doc.samples.map((s) => {
-    const pts = s.landmarks.map((p) => ({ ...p }));
-    // bounds
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    for (const p of pts) {
+  // joint bounds over ALL hands: preserves relative wrist distance and
+  // finger-line crossing for two-hand seals
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const s of doc.samples) {
+    for (const p of s.landmarks) {
       minX = Math.min(minX, p.x);
       maxX = Math.max(maxX, p.x);
       minY = Math.min(minY, p.y);
       maxY = Math.max(maxY, p.y);
     }
-    const bobY = Math.sin(time * 1.7) * 0.02;
-    const swayX = Math.cos(time * 1.1) * 0.02;
-    const w = maxX - minX || 1;
-    const h = maxY - minY || 1;
-    const scale = 0.55 / Math.max(w / 300, h / 300, 1);
-    return pts.map((p) => ({
-      x: 0.5 + ((p.x - (minX + maxX) / 2) / 300) * scale + swayX,
-      y: 0.45 + ((p.y - (minY + maxY) / 2) / 300) * scale + bobY,
-      z: p.z / 300,
-    }));
-  });
+  }
+  const bobY = Math.sin(time * 1.7) * 0.02;
+  const swayX = Math.cos(time * 1.1) * 0.02;
+  const w = maxX - minX || 1;
+  const h = maxY - minY || 1;
+  const scale = 0.55 / Math.max(w / 300, h / 300, 1);
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  return doc.samples.map((s) =>
+    s.landmarks.map((p) => ({
+      x: 0.5 + ((p.x - cx) / 300) * scale + swayX,
+      y: 0.42 + ((p.y - cy) / 300) * scale + bobY,
+      // z scaled by the same factor: keeps 3D shape (extension ratios)
+      z: ((p.z - 0) / 300) * scale,
+    })),
+  );
 }
 
 /** procedural background texture: dark dojo gradient with a glow spot */
@@ -64,14 +69,24 @@ export function demoBackground(): { texture: THREE.DataTexture; w: number; h: nu
       const dy = (y - h * 0.45) / h;
       const d = Math.sqrt(dx * dx + dy * dy);
       const glow = Math.max(0, 1 - d * 1.8);
+      // synthetic "person": soft head-and-shoulders capsule so mask/clone
+      // paths have a subject even without a camera
+      const hx = (x - w / 2) / (w * 0.09);
+      const hyHead = (y - h * 0.42) / (h * 0.11);
+      const hyBody = (y - h * 0.72) / (h * 0.3);
+      const head = Math.max(0, 1 - (hx * hx + hyHead * hyHead));
+      const shoulders = Math.max(0, 1 - (hx * hx * 0.35 + Math.max(0, hyBody) * Math.max(0, hyBody)));
+      const person = Math.max(head * 0.9, shoulders * 0.55);
       const i = (y * w + x) * 4;
-      data[i] = Math.floor(18 + glow * 40);
-      data[i + 1] = Math.floor(20 + glow * 34);
-      data[i + 2] = Math.floor(30 + glow * 44);
+      // near-black neutral room + warm-gray person
+      data[i] = Math.floor(8 + glow * 10 + person * 110);
+      data[i + 1] = Math.floor(9 + glow * 9 + person * 100);
+      data[i + 2] = Math.floor(12 + glow * 9 + person * 92);
       data[i + 3] = 255;
     }
   }
   const texture = new THREE.DataTexture(data, w, h);
+  texture.flipY = true; // match VideoTexture orientation (frame top at v=1)
   texture.needsUpdate = true;
   return { texture, w, h };
 }
