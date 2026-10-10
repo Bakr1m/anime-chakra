@@ -149,3 +149,30 @@ jobs:
         run: |
           docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest --help
           docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest evaluate --n-per-class 10
+
+  pages:
+    needs: [web, python, parity, e2e]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+        env:
+          PAGES_BASE: /${{ github.event.repository.name }}/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+      - uses: actions/deploy-pages@v4
+        id: deploy
