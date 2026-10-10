@@ -11,6 +11,7 @@ import { ParticlePool } from './render/particles';
 import { OverlayRenderer } from './render/renderer';
 import { QualityManager } from './render/quality';
 import { DebugOverlay } from './ui/debugOverlay';
+import { JutsuCards } from './ui/hud';
 import { RECORDER_LABELS, SampleRecorder } from './ui/recorder';
 import { renderStartScreen, setStatus } from './ui/startScreen';
 import './style.css';
@@ -113,6 +114,7 @@ function makeHud(): { hud: HTMLElement; labelEl: HTMLElement | null } {
   hud.className = 'hud';
   hud.innerHTML = `<button type="button" class="flip">Flip camera</button>
     <button type="button" class="mute">Mute</button>
+    <button type="button" class="full">Fullscreen</button>
     <select class="reclabel" aria-label="Record label">
       <option>rasengan</option><option>chidori</option><option>katon</option>
       <option>bunshin</option><option>none</option><option>other</option>
@@ -219,6 +221,7 @@ async function onStart(): Promise<void> {
 
   const { stage, canvas } = makeStage();
   const { hud, labelEl } = makeHud();
+  const cards = new JutsuCards(app);
   const renderer = new OverlayRenderer(canvas);
   renderer.attachVideo(hiddenVideo);
   const quality = new QualityManager();
@@ -236,6 +239,26 @@ async function onStart(): Promise<void> {
     paintMute();
   });
   paintMute();
+
+  hud.querySelector<HTMLButtonElement>('.full')?.addEventListener('click', () => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => undefined);
+    } else {
+      void document.documentElement.requestFullscreen().catch(() => undefined);
+    }
+  });
+
+  // screen wake lock while running; released when hidden
+  const lock = (navigator as Navigator & { wakeLock?: { request(s: string): Promise<{ release(): void }> } }).wakeLock;
+  let wakeRelease: (() => void) | null = null;
+  if (lock) {
+    lock
+      .request('screen')
+      .then((l) => {
+        wakeRelease = () => l.release();
+      })
+      .catch(() => undefined);
+  }
 
   const recorder = new SampleRecorder();
   const recLabel = hud.querySelector<HTMLSelectElement>('.reclabel');
@@ -308,6 +331,8 @@ async function onStart(): Promise<void> {
     if (document.hidden) {
       hiddenVideo.pause();
       audio.stopAll();
+      wakeRelease?.();
+      wakeRelease = null;
     } else {
       void hiddenVideo.play().catch(() => undefined);
     }
@@ -341,6 +366,7 @@ async function onStart(): Promise<void> {
     particles.update(dt);
     renderer.render(dt);
     if (labelEl) labelEl.textContent = active ?? label;
+    cards.update(active, charge);
     overlay.draw(smoothed, active ?? label, charge, quality.fps);
     requestAnimationFrame(loop);
   };
