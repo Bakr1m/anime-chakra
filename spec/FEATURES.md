@@ -47,9 +47,10 @@ spread(f1, f2) = dist(tip1, tip2) / handSize   # adjacent pairs only
 ```
 openness   = mean(extension of index, middle, ring, pinky)
 spreadMean = mean(spread over adjacent pairs index-middle, middle-ring, ring-pinky)
-palmNormal = normal of triangle (wrist, indexMCP, pinkyMCP), sign-fixed:
-             n = cross(indexMCP - wrist, pinkyMCP - wrist); if n.z > 0: n = -n
-             (so +z always points away from the camera-facing palm)
+palmNormal = unit normal of triangle (wrist, indexMCP, pinkyMCP), sign-fixed:
+             n = normalize(cross(indexMCP - wrist, pinkyMCP - wrist)); if n.z > 0: n = -n
+             (so +z always points away from the camera-facing palm; degenerate
+             triangles yield (0, 0, -1))
 palmToCamera = clamp(-n.z, 0, 1)               # 1 = palm facing camera
 pointing   = normalize(middleTip - wrist)      # 3D
 pointingUp = clamp(-pointing.y, -1, 1)         # image y is down, so up is -y
@@ -64,12 +65,10 @@ symmetric value where noted).
 ```
 wristDistance = dist(wristA, wristB) / mean(handSizeA, handSizeB)
 fingerLine(h) = segment(indexTip, middleTip) of hand h   # 2D
-crossAngle    = acute angle (degrees, 0..90 mapped to 0..180 via supplement
-                rule below) between fingerLine(A) and fingerLine(B):
-                d = |deg(acos(clamp(dot(u, v))))|; crossAngle = d if d <= 90 else 180 - d
-                then reported on 0..180 as 180 - d when lines X-cross.
-                Simpler normative rule: segments intersect (2D orientation test)
-                AND the acute angle between direction vectors is in
+crossAngle    = acute angle (degrees, 0..90) between fingerLine(A) and
+                fingerLine(B): d = deg(acos(clamp(dot(u,v)))); crossAngle =
+                d if d <= 90 else 180 - d. A bunshin X requires segments
+                intersect (2D orientation test) AND crossAngle in
                 [crossAngleMinDeg, crossAngleMaxDeg] from gestures.json.
 relativeHeight = (wristA.y - wristB.y) / mean hand size (signed)
 ```

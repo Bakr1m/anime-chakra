@@ -19,7 +19,11 @@
       "needsFace": false,
       "kind": "sustain",
       "cooldownSeconds": 1.0,
-      "colors": { "core": "#FFFFFF", "mid": "#4FC3FF", "edge": "#1565C0" },
+      "colors": {
+        "core": "#FFFFFF",
+        "mid": "#4FC3FF",
+        "edge": "#1565C0"
+      },
       "rules": {
         "opennessMin": 0.4,
         "opennessMax": 0.75,
@@ -37,7 +41,11 @@
       "needsFace": false,
       "kind": "sustain",
       "cooldownSeconds": 1.0,
-      "colors": { "core": "#BFE9FF", "mid": "#4DA3FF", "edge": "#7C4DFF" },
+      "colors": {
+        "core": "#BFE9FF",
+        "mid": "#4DA3FF",
+        "edge": "#7C4DFF"
+      },
       "rules": {
         "fourFingersExtendedMin": 0.8,
         "thumbTuckedMax": 0.45,
@@ -55,7 +63,12 @@
       "kind": "charged",
       "holdSeconds": 0.5,
       "cooldownSeconds": 4.0,
-      "colors": { "core": "#FFFFFF", "mid": "#FFB300", "edge": "#FF6A00", "smoke": "#1A1A1A" },
+      "colors": {
+        "core": "#FFFFFF",
+        "mid": "#FFB300",
+        "edge": "#FF6A00",
+        "smoke": "#1A1A1A"
+      },
       "rules": {
         "wristDistanceMax": 1.6,
         "indexMiddleExtendedMin": 0.75,
@@ -72,12 +85,16 @@
       "needsFace": false,
       "kind": "oneshot",
       "cooldownSeconds": 6.0,
-      "colors": { "core": "#FFFFFF", "mid": "#ECEFF1", "edge": "#90A4AE" },
+      "colors": {
+        "core": "#FFFFFF",
+        "mid": "#ECEFF1",
+        "edge": "#90A4AE"
+      },
       "rules": {
         "bothHandsIndexMiddleExtendedMin": 0.7,
         "fingerLinesCross": true,
         "crossAngleMinDeg": 20.0,
-        "crossAngleMaxDeg": 160.0
+        "crossAngleMaxDeg": 90.0
       }
     },
     {
@@ -91,8 +108,14 @@
       "stretch": true,
       "webOnly": true,
       "cooldownSeconds": 1.0,
-      "colors": { "core": "#D50000", "mid": "#8B0000", "edge": "#000000" },
-      "rules": { "indexTipNearEyeMax": 1.2 }
+      "colors": {
+        "core": "#D50000",
+        "mid": "#8B0000",
+        "edge": "#000000"
+      },
+      "rules": {
+        "indexTipNearEyeMax": 1.2
+      }
     },
     {
       "id": "kurama",
@@ -105,8 +128,15 @@
       "stretch": true,
       "webOnly": true,
       "cooldownSeconds": 2.0,
-      "colors": { "core": "#FFD54F", "mid": "#FF8F00", "edge": "#E65100" },
-      "rules": { "bothFistsClenched": true, "handsAboveShoulders": true }
+      "colors": {
+        "core": "#FFD54F",
+        "mid": "#FF8F00",
+        "edge": "#E65100"
+      },
+      "rules": {
+        "bothFistsClenched": true,
+        "handsAboveShoulders": true
+      }
     }
   ]
 }
