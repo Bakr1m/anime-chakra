@@ -6,6 +6,8 @@ import typer
 
 from chakralens.bench.bench import app as bench_app
 from chakralens.cli.run import app as run_app
+from chakralens.datasets.extract_cmd import app as extract_app
+from chakralens.datasets.record_cmd import app as record_app
 from chakralens.training.evaluate_cmd import app as evaluate_app
 from chakralens.training.train_cmd import app as train_app
 
@@ -14,6 +16,8 @@ app.add_typer(run_app)
 app.add_typer(bench_app)
 app.add_typer(train_app)
 app.add_typer(evaluate_app)
+app.add_typer(record_app)
+app.add_typer(extract_app)
 
 
 @app.command()
