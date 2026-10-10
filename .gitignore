@@ -18,3 +18,5 @@ data/
 playwright-report/
 test-results/
 web/public/models/
+.venv/
+.coverage
