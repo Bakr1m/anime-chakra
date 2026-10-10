@@ -18,6 +18,9 @@ export class OverlayRenderer {
   private videoQuad: THREE.Mesh | null = null;
   private flashMat: THREE.MeshBasicMaterial;
   private flashMesh: THREE.Mesh;
+  private flashBudget = 0;
+  private flashWindow = 0;
+  reducedMotion = false;
   private shake = 0;
   private W = 1280;
   private H = 720;
@@ -123,13 +126,22 @@ export class OverlayRenderer {
   }
 
   addFlash(amount: number, color = 0xffffff): void {
+    // photosensitivity guard: at most ~2 full flashes per second
+    const now = performance.now() / 1000;
+    if (now - this.flashWindow > 1) {
+      this.flashWindow = now;
+      this.flashBudget = 0;
+    }
+    this.flashBudget += amount;
+    const cap = this.reducedMotion ? 0.06 : this.flashBudget > 2 ? amount * 0.25 : amount;
     this.flashMat.color.setHex(color);
     // set-max (not accumulate): callers pass an instantaneous level every
     // frame, so high-fps machines cannot ratchet to a stuck white screen
-    this.flashMat.opacity = Math.min(1, Math.max(this.flashMat.opacity, amount));
+    this.flashMat.opacity = Math.min(1, Math.max(this.flashMat.opacity, cap));
   }
 
   addShake(px: number): void {
+    if (this.reducedMotion) return;
     this.shake = Math.min(8, this.shake + px);
   }
 

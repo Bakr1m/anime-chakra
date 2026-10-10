@@ -121,6 +121,7 @@ function makeHud(): { hud: HTMLElement; labelEl: HTMLElement | null } {
   hud.innerHTML = `<button type="button" class="flip">Flip camera</button>
     <button type="button" class="mute">Mute</button>
     <button type="button" class="full">Fullscreen</button>
+    <button type="button" class="motion">Calm</button>
     <select class="reclabel" aria-label="Record label">
       <option>rasengan</option><option>chidori</option><option>katon</option>
       <option>bunshin</option><option>none</option><option>other</option>
@@ -246,6 +247,16 @@ async function onStart(): Promise<void> {
   });
   paintMute();
 
+  const motionBtn = hud.querySelector<HTMLButtonElement>('.motion');
+  const paintMotion = (): void => {
+    if (motionBtn) motionBtn.textContent = quality.reducedMotion ? 'Lively' : 'Calm';
+    renderer.reducedMotion = quality.reducedMotion;
+  };
+  motionBtn?.addEventListener('click', () => {
+    quality.reducedMotion = !quality.reducedMotion;
+    paintMotion();
+  });
+  paintMotion();
   hud.querySelector<HTMLButtonElement>('.full')?.addEventListener('click', () => {
     if (document.fullscreenElement) {
       void document.exitFullscreen().catch(() => undefined);

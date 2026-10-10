@@ -71,7 +71,8 @@ export class Chidori implements Jutsu {
   update(_dt: number, _time: number, ctx: JutsuContext, charge: number, anchor: EffectAnchor): void {
     this.frame++;
     // regenerate every 2-3 frames for ~30 Hz flicker; seed advances deterministically
-    if (this.frame % 2 === 0) {
+    const cadence = ctx.quality.reducedMotion ? 4 : 2;
+    if (this.frame % cadence === 0) {
       this.seed = (this.seed + 1) >>> 0;
       this.rebuild(ctx, charge, anchor);
     }

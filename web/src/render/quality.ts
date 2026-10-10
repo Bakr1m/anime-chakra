@@ -15,12 +15,17 @@ export interface DeviceReport {
 export class QualityManager {
   level: QualityLevel = 0;
   delegate = 'unknown';
+  reducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private samples: number[] = [];
   private lowSince = -1;
   fps = 60;
 
-  /** particle budget multiplier per level */
+  /** particle budget multiplier per level (reduced motion pins it low) */
   get particleScale(): number {
+    if (this.reducedMotion) return 0.25;
     return this.level === 0 ? 1 : this.level === 1 ? 0.5 : 0.25;
   }
 

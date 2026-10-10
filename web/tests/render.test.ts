@@ -41,6 +41,14 @@ describe('ParticlePool', () => {
   });
 });
 
+describe('reduced motion', () => {
+  it('pins particle scale low', () => {
+    const q = new QualityManager();
+    q.reducedMotion = true;
+    expect(q.particleScale).toBe(0.25);
+  });
+});
+
 describe('QualityManager', () => {
   it('degrades after sustained low fps and reports', () => {
     const q = new QualityManager();
