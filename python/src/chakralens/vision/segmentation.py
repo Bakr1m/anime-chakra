@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 
 
 def default_model_path() -> Path:
-    return Path(__file__).resolve().parents[5] / "models" / "selfie_segmenter.tflite"
+    return Path(__file__).resolve().parents[4] / "models" / "selfie_segmenter.tflite"
 
 
 class Segmentation:

@@ -18,7 +18,7 @@ class DetectedHand:
 
 
 def default_model_path() -> Path:
-    return Path(__file__).resolve().parents[5] / "models" / "hand_landmarker.task"
+    return Path(__file__).resolve().parents[4] / "models" / "hand_landmarker.task"
 
 
 class HandTracker:
