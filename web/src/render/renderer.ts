@@ -14,7 +14,7 @@ export class OverlayRenderer {
   readonly fx = new THREE.Group();
   private composer: EffectComposer;
   private bloom: UnrealBloomPass;
-  private videoTex: THREE.VideoTexture | null = null;
+  private videoTex: THREE.Texture | null = null;
   private videoQuad: THREE.Mesh | null = null;
   private flashMat: THREE.MeshBasicMaterial;
   private shake = 0;
@@ -48,14 +48,25 @@ export class OverlayRenderer {
   }
 
   attachVideo(video: HTMLVideoElement): void {
-    this.videoTex = new THREE.VideoTexture(video);
-    this.videoTex.colorSpace = THREE.SRGBColorSpace;
-    const mat = new THREE.MeshBasicMaterial({ map: this.videoTex, toneMapped: false });
+    const tex = new THREE.VideoTexture(video);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    this.attachTexture(tex, video.videoWidth || 1280, video.videoHeight || 720);
+  }
+
+  /** demo/headless path: attach any texture as the background */
+  attachTexture(tex: THREE.Texture, vw: number, vh: number): void {
+    this.videoTex = tex;
+    const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+    if (this.videoQuad) {
+      this.scene.remove(this.videoQuad);
+      (this.videoQuad.material as THREE.Material).dispose();
+      this.videoQuad.geometry.dispose();
+    }
     this.videoQuad = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
     this.videoQuad.position.set(0.5, 0.5, -5);
     this.videoQuad.frustumCulled = false;
     this.scene.add(this.videoQuad);
-    this.layoutVideo(video.videoWidth || 1280, video.videoHeight || 720);
+    this.layoutVideo(vw, vh);
   }
 
   /** cover-fit the video quad into the pixel-space frustum */
@@ -114,6 +125,19 @@ export class OverlayRenderer {
       this.camera.position.y = 0;
     }
     this.composer.render();
+  }
+
+  get videoTexture(): THREE.Texture | null {
+    return this.videoTex;
+  }
+
+  /** cover-fit UV transform currently applied to the video texture */
+  get videoTransform(): { repeat: [number, number]; offset: [number, number] } {
+    if (!this.videoTex) return { repeat: [1, 1], offset: [0, 0] };
+    return {
+      repeat: [this.videoTex.repeat.x, this.videoTex.repeat.y],
+      offset: [this.videoTex.offset.x, this.videoTex.offset.y],
+    };
   }
 
   get width(): number {

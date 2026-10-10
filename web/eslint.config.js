@@ -7,6 +7,10 @@ export default [
     files: ['src/**/*.ts', 'tests/**/*.ts', 'e2e/**/*.ts'],
     languageOptions: { parser: tsparser, parserOptions: { project: './tsconfig.json' } },
     plugins: { '@typescript-eslint': tseslint },
-    rules: { ...tseslint.configs['recommended'].rules, '@typescript-eslint/no-explicit-any': 'error' },
+    rules: {
+      ...tseslint.configs['recommended'].rules,
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
   },
 ];
