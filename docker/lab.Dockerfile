@@ -8,5 +8,6 @@ COPY python/ ./python/
 COPY spec/ ./spec/
 COPY models/ ./models/
 RUN pip install --no-cache-dir ./python
+COPY models-export/ ./models-export/
 ENTRYPOINT ["chakralens"]
 CMD ["--help"]
