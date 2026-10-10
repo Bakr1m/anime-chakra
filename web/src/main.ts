@@ -1,6 +1,6 @@
 import { Camera } from './camera/camera';
 import { SynthAudio } from './audio/voices';
-import { demoBackground, demoHands } from './demo/driver';
+import { demoBackground, demoEyeSpot, demoHands, demoMask } from './demo/driver';
 import { LandmarkSmoother } from './filters/oneEuro';
 import { classifyEnsemble } from './gestures/ensemble';
 import { getSpec } from './gestures/spec';
@@ -132,6 +132,8 @@ async function runDemo(id: string): Promise<void> {
   renderer.resize(W, H, 1);
   const bg = demoBackground();
   renderer.attachTexture(bg.texture, bg.w, bg.h);
+  const mask = id === 'kurama' ? demoMask() : null;
+  const forceId = id === 'sharingan' || id === 'kurama' ? id : null;
 
   const audio = new SynthAudio();
   const quality = new QualityManager();
@@ -168,7 +170,19 @@ async function runDemo(id: string): Promise<void> {
       id === 'katon' && hands[0]?.[0]
         ? { x: W / 2, y: H * 0.32, headPx: 90 }
         : null;
-    manager.update({ dt, time, hands, video: null, label, charge, activeId: active, demoMouth });
+    manager.update({
+      dt,
+      time,
+      hands,
+      video: null,
+      label,
+      charge,
+      activeId: active,
+      demoMouth,
+      forceId,
+      demoEye: id === 'sharingan' ? demoEyeSpot() : null,
+      demoMask: mask ? mask.texture : null,
+    });
     const w = window as unknown as Record<string, unknown>;
     w['__chakraLabel'] = active ?? label;
     const hist = (w['__chakraHist'] as string[] | undefined) ?? [];

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import type { Landmark } from '../gestures/features';
 import bunshinFx from '../../../spec/fixtures/bunshin.json';
 import chidoriFx from '../../../spec/fixtures/chidori.json';
+import fistFx from '../../../spec/fixtures/fist.json';
 import katonFx from '../../../spec/fixtures/katon.json';
 import rasenganFx from '../../../spec/fixtures/rasengan.json';
 
@@ -17,6 +18,8 @@ const FIXTURES: Record<string, FixtureDoc> = {
   chidori: chidoriFx as FixtureDoc,
   katon: katonFx as FixtureDoc,
   bunshin: bunshinFx as FixtureDoc,
+  sharingan: bunshinFx as FixtureDoc,
+  kurama: fistFx as FixtureDoc,
 };
 
 export function demoIds(): string[] {
@@ -48,7 +51,7 @@ export function demoHands(id: string, time: number): Landmark[][] {
   const scale = 0.55 / Math.max(w / 300, h / 300, 1);
   const cx = (minX + maxX) / 2;
   const cy = (minY + maxY) / 2;
-  return doc.samples.map((s) =>
+  const mapped = doc.samples.map((s) =>
     s.landmarks.map((p) => ({
       x: 0.5 + ((p.x - cx) / 300) * scale + swayX,
       y: 0.42 + ((p.y - cy) / 300) * scale + bobY,
@@ -56,6 +59,54 @@ export function demoHands(id: string, time: number): Landmark[][] {
       z: ((p.z - 0) / 300) * scale,
     })),
   );
+  if (id === 'sharingan' && mapped[0]?.[8]) {
+    // point the index finger at the demo eye anchor
+    const tip = mapped[0][8];
+    const dx = 0.5 - tip.x;
+    const dy = 0.3 - tip.y;
+    for (const hand of mapped) {
+      for (const p of hand) {
+        p.x += dx;
+        p.y += dy;
+      }
+    }
+  }
+  if (id === 'kurama' && mapped[0]) {
+    // two raised fists: duplicate the fist, offset sideways, lift up
+    const second = mapped[0].map((p) => ({ ...p, x: p.x + 0.22, y: p.y - 0.04 }));
+    const first = mapped[0].map((p) => ({ ...p, x: p.x - 0.11 }));
+    return [first, second];
+  }
+  return mapped;
+}
+
+/** demo eye anchor for sharingan (normalized-ish screen spot) */
+export function demoEyeSpot(): { x: number; y: number; size: number } {
+  return { x: 320, y: 108, size: 44 };
+}
+
+/** demo person-mask: capsule matching the background figure (for kurama) */
+export function demoMask(): { texture: THREE.DataTexture; w: number; h: number } {
+  const w = 160;
+  const h = 90;
+  const data = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (const x of Array.from({ length: w }, (_, i) => i)) {
+      const hx = (x - w / 2) / (w * 0.09);
+      const hyHead = (y - h * 0.42) / (h * 0.11);
+      const hyBody = (y - h * 0.72) / (h * 0.3);
+      const head = Math.max(0, 1 - (hx * hx + hyHead * hyHead));
+      const shoulders = Math.max(0, 1 - (hx * hx * 0.35 + Math.max(0, hyBody) ** 2));
+      const m = Math.max(head, shoulders * 0.8) > 0.35 ? 255 : 0;
+      const i = (y * w + x) * 4;
+      data[i] = m;
+      data[i + 3] = 255;
+    }
+  }
+  const texture = new THREE.DataTexture(data, w, h);
+  texture.flipY = true;
+  texture.needsUpdate = true;
+  return { texture, w, h };
 }
 
 /** procedural background texture: dark dojo gradient with a glow spot */

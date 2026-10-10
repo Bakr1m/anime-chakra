@@ -55,6 +55,19 @@ describe('demo driver', () => {
     }
   });
 
+  it('stretch demos map hands near their anchors', () => {
+    const sh = demoHands('sharingan', 1.0);
+    expect(sh.length).toBe(2);
+    const tip = sh[0]?.[8];
+    expect(tip).toBeDefined();
+    if (tip) {
+      expect(Math.abs(tip.x - 0.5)).toBeLessThan(0.05);
+      expect(Math.abs(tip.y - 0.3)).toBeLessThan(0.05);
+    }
+    const ku = demoHands('kurama', 1.0);
+    expect(ku.length).toBe(2);
+  });
+
   it('builds a background texture', () => {
     const bg = demoBackground();
     expect(bg.w).toBe(640);

@@ -13,6 +13,10 @@ import { Rasengan } from './rasengan/rasengan';
 import { Chidori } from './chidori/chidori';
 import { KageBunshin } from './bunshin/bunshin';
 import { Katon } from './katon/katon';
+import { Sharingan } from './sharingan/sharingan';
+import { KuramaCloak } from './kurama/kurama';
+import { JutsuState } from '../gestures/stateMachine';
+import { getSpec } from '../gestures/spec';
 import type { EffectAnchor, Jutsu, JutsuContext } from './types';
 
 export interface FrameInput {
@@ -24,6 +28,10 @@ export interface FrameInput {
   charge: number;
   activeId: string | null;
   demoMouth?: { x: number; y: number; headPx: number } | null;
+  /** demo/forced jutsu bypasses the classifier (stretch modes) */
+  forceId?: string | null;
+  demoEye?: { x: number; y: number; size: number } | null;
+  demoMask?: THREE.Texture | null;
 }
 
 export class JutsuManager implements JutsuContext {
@@ -56,11 +64,15 @@ export class JutsuManager implements JutsuContext {
     const chidori = new Chidori();
     const bunshin = new KageBunshin();
     const katon = new Katon();
-    this.jutsu = { rasengan, chidori, bunshin, katon };
-    // jutsus that need extra context get it here
-    void bunshin;
-    void katon;
+    const sharingan = new Sharingan();
+    const kurama = new KuramaCloak();
+    this.jutsu = { rasengan, chidori, bunshin, katon, sharingan, kurama };
+    this.spec = getSpec();
   }
+
+  private spec: ReturnType<typeof getSpec>;
+  private sharinganStreak = new JutsuState();
+  private kuramaStreak = new JutsuState();
 
   setDemoSeed(id: string): void {
     this.rng = mulberry32(hashSeed(id));
@@ -98,9 +110,59 @@ export class JutsuManager implements JutsuContext {
     if (face && !this.face.ready) await this.face.init().catch(() => undefined);
   }
 
+  /** Stretch-mode fusion: sharingan/kurama override the hand classifier. */
+  private stretchId(f: FrameInput): string | null {
+    // sharingan: index tip within 1.2 eye-widths of an eye
+    if (f.hands.length >= 1 && f.hands[0]) {
+      const tip = f.hands[0][8];
+      const eyes =
+        this.face.eyes.length > 0
+          ? this.face.eyes
+          : f.demoEye
+            ? [{ cx: 0.5, cy: 0.3, width: 0.06, ix: 0.5, iy: 0.3 }]
+            : [];
+      if (tip && eyes.length > 0) {
+        let near = false;
+        for (const e of eyes) {
+          if (Math.hypot(tip.x - e.ix, tip.y - e.iy) < 1.2 * Math.max(e.width, 1e-3)) {
+            near = true;
+            break;
+          }
+        }
+        const [id] = this.sharinganStreak.update(near ? 'sharingan' : 'none', near ? 1 : 0, f.time, f.dt, this.spec);
+        if (id === 'sharingan') return 'sharingan';
+      }
+    }
+    // kurama: both fists clenched and raised (wrists above frame middle)
+    if (f.hands.length === 2 && f.hands[0] && f.hands[1]) {
+      const fist = (h: Landmark[]): boolean =>
+        ['index', 'middle', 'ring', 'pinky'].every((k) => {
+          const mcp = { index: 5, middle: 9, ring: 13, pinky: 17 }[k] ?? 5;
+          const tip = { index: 8, middle: 12, ring: 16, pinky: 20 }[k] ?? 8;
+          const a = h[mcp];
+          const b = h[tip];
+          const w = h[0];
+          const m = h[9];
+          if (!a || !b || !w || !m) return false;
+          const size = Math.hypot(m.x - w.x, m.y - w.y) || 1e-6;
+          return Math.hypot(b.x - a.x, b.y - a.y) / size < 0.45;
+        });
+      const h0 = f.hands[0];
+      const h1 = f.hands[1];
+      const raised = (h0[0]?.y ?? 1) < 0.5 && (h1[0]?.y ?? 1) < 0.5;
+      const both = fist(h0) && fist(h1) && raised;
+      const [id] = this.kuramaStreak.update(both ? 'kurama' : 'none', both ? 1 : 0, f.time, f.dt, this.spec);
+      if (id === 'kurama') return 'kurama';
+    }
+    return null;
+  }
+
   update(f: FrameInput): void {
     this.time = f.time;
-    const next = f.activeId ? (this.jutsu[f.activeId] ?? null) : null;
+    const forced = f.forceId ? (this.jutsu[f.forceId] ?? null) : null;
+    const stretch = !forced && !f.demoMouth ? this.stretchId(f) : null;
+    const wantId = forced?.id ?? stretch ?? f.activeId;
+    const next = wantId ? (this.jutsu[wantId] ?? null) : null;
     if (next !== this.current) {
       this.current?.onDeactivate(this);
       this.current = next;
@@ -143,6 +205,37 @@ export class JutsuManager implements JutsuContext {
       this.holdTime += f.dt;
       if (this.holdTime >= 0.5 && k.alive === 0) {
         k.fire(this, anchor);
+      }
+    }
+
+    if (this.current.id === 'sharingan') {
+      const s = this.jutsu['sharingan'];
+      if (s instanceof Sharingan) {
+        if (f.demoEye) {
+          s.iris = f.demoEye;
+        } else if (this.face.eyes.length > 0 && hand[8]) {
+          const W = this.renderer.width;
+          const H = this.renderer.height;
+          const tip = hand[8];
+          let best = this.face.eyes[0];
+          let bestD = Infinity;
+          for (const e of this.face.eyes) {
+            const d = tip ? Math.hypot(tip.x - e.ix, tip.y - e.iy) : Infinity;
+            if (d < bestD) {
+              bestD = d;
+              best = e;
+            }
+          }
+          if (best) {
+            s.iris = { x: best.ix * W, y: best.iy * H, size: best.width * W * 1.7 };
+          }
+        }
+      }
+    }
+    if (this.current.id === 'kurama') {
+      const k = this.jutsu['kurama'];
+      if (k instanceof KuramaCloak) {
+        k.mask = this.seg.mask ?? f.demoMask ?? this.fallbackMask();
       }
     }
 

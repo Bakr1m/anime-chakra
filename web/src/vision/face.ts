@@ -6,6 +6,17 @@ export interface FaceAnchor {
   headSize: number;
 }
 
+export interface EyeAnchor {
+  /** eye center, normalized */
+  cx: number;
+  cy: number;
+  /** eye width (outer-inner corner), normalized */
+  width: number;
+  /** iris center, normalized */
+  ix: number;
+  iy: number;
+}
+
 export class FaceTracker {
   private landmarker: {
     detectForVideo(v: unknown, t: number): { faceLandmarks?: { x: number; y: number }[][] };
@@ -13,6 +24,7 @@ export class FaceTracker {
   } | null = null;
   private frame = 0;
   last: FaceAnchor | null = null;
+  eyes: EyeAnchor[] = [];
 
   get ready(): boolean {
     return this.landmarker !== null;
@@ -53,6 +65,24 @@ export class FaceTracker {
       mouthY: (upper.y + lower.y) / 2,
       headSize: Math.hypot(fore.x - chin.x, fore.y - chin.y),
     };
+    // eyes: outer/inner corners + iris (MediaPipe indices)
+    this.eyes = [];
+    for (const [outer, inner, iris] of [
+      [33, 133, 468],
+      [263, 362, 473],
+    ] as const) {
+      const o = face[outer];
+      const n = face[inner];
+      const r = face[iris];
+      if (!o || !n || !r) continue;
+      this.eyes.push({
+        cx: (o.x + n.x) / 2,
+        cy: (o.y + n.y) / 2,
+        width: Math.hypot(o.x - n.x, o.y - n.y),
+        ix: r.x,
+        iy: r.y,
+      });
+    }
   }
 
   dispose(): void {
