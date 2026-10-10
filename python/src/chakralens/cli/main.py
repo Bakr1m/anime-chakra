@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from chakralens.bench.bench import app as bench_app
+from chakralens.cli.qr import app as qr_app
 from chakralens.cli.run import app as run_app
 from chakralens.datasets.extract_cmd import app as extract_app
 from chakralens.datasets.record_cmd import app as record_app
@@ -18,6 +19,7 @@ app.add_typer(train_app)
 app.add_typer(evaluate_app)
 app.add_typer(record_app)
 app.add_typer(extract_app)
+app.add_typer(qr_app)
 
 
 @app.command()
