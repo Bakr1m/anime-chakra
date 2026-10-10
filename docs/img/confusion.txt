@@ -1,0 +1,11 @@
+synthetic held-out (fresh seed): accuracy=0.996 n=2800
+real data/: none found (film signs, run chakralens extract, re-run)
+rows=true cols=pred, synthetic-trained baseline:
+         rasenchidotigercross open fistother
+rasengan   400    0    0    0    0    0    0
+chidori      0  400    0    0    0    0    0
+tiger        0    0  400    0    0    0    0
+cross        0    0    0  400    0    0    0
+open         0    0    0    0  400    0    0
+fist         0    0    0    0    0  400    0
+other        6    1    2    1    0    1  389
