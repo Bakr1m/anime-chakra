@@ -1,0 +1,23 @@
+Metadata-Version: 2.4
+Name: chakralens
+Version: 1.0.0
+Summary: Chakra Lens lab + desktop: gesture brain, dataset tooling, OpenCV renderer
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.26
+Requires-Dist: opencv-python-headless>=4.9
+Requires-Dist: mediapipe>=0.10
+Requires-Dist: scikit-learn>=1.4
+Requires-Dist: typer>=0.12
+Requires-Dist: qrcode>=7.4
+Provides-Extra: gui
+Requires-Dist: opencv-python>=4.9; extra == "gui"
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: pytest-cov>=5; extra == "dev"
+Requires-Dist: ruff>=0.6; extra == "dev"
+Requires-Dist: mypy>=1.11; extra == "dev"
+Requires-Dist: numpy; extra == "dev"
+Requires-Dist: scikit-learn; extra == "dev"
+
+# chakralens (Python lab + desktop)

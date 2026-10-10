@@ -1,0 +1,2 @@
+[console_scripts]
+chakralens = chakralens.cli.main:app
