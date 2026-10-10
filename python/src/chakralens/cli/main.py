@@ -1,5 +1,7 @@
 """Chakra Lens CLI entry point."""
 
+from pathlib import Path
+
 import typer
 
 app = typer.Typer(help="Chakra Lens lab + desktop tools.")
@@ -11,6 +13,20 @@ def version() -> None:
     from chakralens import __version__
 
     print(__version__)
+
+
+@app.command()
+def fixtures(
+    out: Path = typer.Option(  # noqa: B008
+        Path("spec/fixtures"), help="Output directory for fixture JSON files."
+    ),
+) -> None:
+    """Generate seeded landmark fixtures for the parity suites."""
+    from chakralens.datasets.fixtures import generate
+
+    paths = generate(out)
+    for p in paths:
+        print(f"wrote {p}")
 
 
 @app.callback(invoke_without_command=True)
