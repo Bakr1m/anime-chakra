@@ -135,3 +135,85 @@ def preset(name: str, seed: int = 0, **kw: object) -> list[dict[str, float]]:
             **kw,  # type: ignore[arg-type]
         )
     raise KeyError(name)
+
+
+# ---------------------------------------------------------------------------
+# Augmentation + dataset assembly for the synthetic-trained MLP baseline.
+# ---------------------------------------------------------------------------
+
+CLASSES = ("rasengan", "chidori", "tiger", "cross", "open", "fist", "other")
+
+# curl prototype per class: (preset-name, curl jitter)
+CLASS_PRESET = {
+    "rasengan": "rasengan",
+    "chidori": "chidori",
+    "tiger": "tiger",
+    "cross": "cross",
+    "open": "open_palm",
+    "fist": "fist",
+}
+
+
+def augment(
+    hand: list[dict[str, float]],
+    rng: random.Random,
+    rotate_deg: float = 25.0,
+    scale: float = 0.15,
+    noise: float = 3.0,
+) -> list[dict[str, float]]:
+    """Rotation/scale/noise augmentation in landmark space (units of the hand)."""
+    ang = math.radians(rng.uniform(-rotate_deg, rotate_deg))
+    sc = 1.0 + rng.uniform(-scale, scale)
+    c, s = math.cos(ang), math.sin(ang)
+    xs = [p["x"] for p in hand]
+    ys = [p["y"] for p in hand]
+    cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
+    out = []
+    for p in hand:
+        x = (p["x"] - cx) * sc
+        y = (p["y"] - cy) * sc
+        out.append(
+            {
+                "x": cx + x * c - y * s + rng.uniform(-noise, noise),
+                "y": cy + x * s + y * c + rng.uniform(-noise, noise),
+                "z": p["z"] * sc + rng.uniform(-noise, noise) * 0.3,
+            }
+        )
+    return out
+
+
+def random_other(rng: random.Random) -> list[dict[str, float]]:
+    """A random non-sign hand: uniform curls + spread."""
+    curl = {f: rng.random() for f in FINGER_ORDER}
+    return make_hand(
+        curl=curl,
+        spread=rng.uniform(0.4, 1.2),
+        rotate_deg=rng.uniform(-90, 90),
+        seed=rng.randrange(1 << 30),
+    )
+
+
+def normalize(hand: list[dict[str, float]]) -> list[float]:
+    """63-dim MLP input: wrist-centered, hand-size scaled (x, y, z)."""
+    wrist = hand[0]
+    size = math.hypot(hand[9]["x"] - wrist["x"], hand[9]["y"] - wrist["y"]) or 1e-6
+    vec: list[float] = []
+    for p in hand:
+        vec += [(p["x"] - wrist["x"]) / size, (p["y"] - wrist["y"]) / size, (p["z"] - wrist["z"]) / size]
+    return vec
+
+
+def generate_dataset(n_per_class: int = 400, seed: int = 7) -> tuple[list[list[float]], list[str]]:
+    """Synthetic (X, y). Deterministic for a given seed."""
+    rng = random.Random(seed)
+    xs: list[list[float]] = []
+    ys: list[str] = []
+    for cls in CLASSES:
+        for _ in range(n_per_class):
+            if cls == "other":
+                hand = random_other(rng)
+            else:
+                hand = preset(CLASS_PRESET[cls], seed=rng.randrange(1 << 30))
+            xs.append(normalize(augment(hand, rng)))
+            ys.append(cls)
+    return xs, ys
