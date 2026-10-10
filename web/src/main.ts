@@ -2,7 +2,7 @@ import { Camera } from './camera/camera';
 import { SynthAudio } from './audio/voices';
 import { demoBackground, demoHands } from './demo/driver';
 import { LandmarkSmoother } from './filters/oneEuro';
-import { classify } from './gestures/rules';
+import { classifyEnsemble } from './gestures/ensemble';
 import { getSpec } from './gestures/spec';
 import { JutsuState } from './gestures/stateMachine';
 import { JutsuManager } from './jutsu/manager';
@@ -11,6 +11,7 @@ import { ParticlePool } from './render/particles';
 import { OverlayRenderer } from './render/renderer';
 import { QualityManager } from './render/quality';
 import { DebugOverlay } from './ui/debugOverlay';
+import { RECORDER_LABELS, SampleRecorder } from './ui/recorder';
 import { renderStartScreen, setStatus } from './ui/startScreen';
 import './style.css';
 
@@ -112,6 +113,11 @@ function makeHud(): { hud: HTMLElement; labelEl: HTMLElement | null } {
   hud.className = 'hud';
   hud.innerHTML = `<button type="button" class="flip">Flip camera</button>
     <button type="button" class="mute">Mute</button>
+    <select class="reclabel" aria-label="Record label">
+      <option>rasengan</option><option>chidori</option><option>katon</option>
+      <option>bunshin</option><option>none</option><option>other</option>
+    </select>
+    <button type="button" class="rec">Record</button>
     <span class="label"></span>`;
   app.appendChild(hud);
   return { hud, labelEl: hud.querySelector<HTMLElement>('.label') };
@@ -155,7 +161,7 @@ async function runDemo(id: string): Promise<void> {
     const time = clock.tick(dt);
     quality.update(dt * 1000, now);
     const hands = smoothHands(demoHands(id, time), time);
-    const [label, conf] = classify(hands, spec);
+    const [label, conf] = classifyEnsemble(hands, spec);
     const [active, charge] = state.update(label, conf, time, dt, spec);
     // demo mouth anchor for katon: above the hands
     const demoMouth =
@@ -216,6 +222,31 @@ async function onStart(): Promise<void> {
     paintMute();
   });
   paintMute();
+
+  const recorder = new SampleRecorder();
+  const recLabel = hud.querySelector<HTMLSelectElement>('.reclabel');
+  const recBtn = hud.querySelector<HTMLButtonElement>('.rec');
+  const paintRec = (): void => {
+    if (recBtn) {
+      recBtn.textContent = recorder.state === 'recording' ? 'Stop' : 'Record';
+    }
+  };
+  const toggleRec = (): void => {
+    if (recorder.state === 'recording') {
+      recorder.download();
+    } else {
+      recorder.start(recLabel?.value && RECORDER_LABELS.includes(recLabel.value as 'rasengan') ? recLabel.value : 'rasengan');
+    }
+    paintRec();
+  };
+  recBtn?.addEventListener('click', toggleRec);
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'r' || e.key === 'R') toggleRec();
+  });
+  recorder.onDone = () => {
+    recorder.download();
+    paintRec();
+  };
 
   if (new URLSearchParams(location.search).has('debug')) {
     const btn = document.createElement('button');
@@ -284,9 +315,15 @@ async function onStart(): Promise<void> {
         time,
       );
     });
-    const [label, conf] = classify(smoothed, spec);
+    const [label, conf] = classifyEnsemble(smoothed, spec);
     const [active, charge] = state.update(label, conf, time, dt, spec);
     manager.update({ dt, time, hands: smoothed, video: hiddenVideo, label, charge, activeId: active });
+    recorder.push(
+      hands.map((h, i) => ({
+        landmarks: smoothed[i] ?? [],
+        handedness: h.handedness,
+      })),
+    );
     particles.update(dt);
     renderer.render(dt);
     if (labelEl) labelEl.textContent = active ?? label;

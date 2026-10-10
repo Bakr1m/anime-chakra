@@ -32,7 +32,15 @@ def main() -> int:
     py = str(venv_py) if venv_py.exists() else sys.executable
     failures += run([py, "-m", "pytest", "python/tests/test_fixtures.py", "-q"], ROOT)
     failures += run(
-        ["npx", "vitest", "run", "tests/parity.test.ts", "--config", "vitest.config.ts"],
+        [
+            "npx",
+            "vitest",
+            "run",
+            "tests/parity.test.ts",
+            "tests/parity-mlp.test.ts",
+            "--config",
+            "vitest.config.ts",
+        ],
         ROOT / "web",
     )
     if failures:
