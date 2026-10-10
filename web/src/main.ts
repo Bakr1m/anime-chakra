@@ -22,6 +22,12 @@ if (!app) throw new Error('#app missing');
 const params = new URLSearchParams(location.search);
 const demoId = params.get('demo');
 
+if ('serviceWorker' in navigator && !demoId) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+  });
+}
+
 if (demoId) {
   void runDemo(demoId);
 } else {

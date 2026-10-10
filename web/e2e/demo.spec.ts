@@ -64,3 +64,18 @@ test('start screen loads with privacy notice', async ({ page }) => {
   const canvas = page.locator('.stage canvas');
   await expect(canvas).toHaveCount(0);
 });
+
+test('offline reload works after first load', async ({ page, context }) => {
+  await page.goto('/');
+  await expect(page.locator('.start-screen')).toBeVisible();
+  // second online load: the service worker controls the page and caches bundles
+  await page.reload();
+  await expect(page.locator('.start-screen')).toBeVisible();
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
+    timeout: 15000,
+  });
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator('.start-screen')).toBeVisible();
+  await expect(page.locator('.privacy')).toContainText('runs on your device');
+});
