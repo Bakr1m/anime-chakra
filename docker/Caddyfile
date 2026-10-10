@@ -1,0 +1,9 @@
+# LAN HTTPS with internal CA: https://<lan-ip>:8443
+{
+  auto_https off
+}
+
+:8443 {
+  tls internal
+  reverse_proxy web:8080
+}
