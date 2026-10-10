@@ -13,5 +13,5 @@
 - [x] Phase 10: ML + real-data tooling
 - [x] Phase 11: stretch + polish
 - [x] Phase 12: containers + phone
-- [ ] Phase 13: CI/CD + docs
+- [x] Phase 13: CI/CD + docs
 - [ ] Phase 14: ship
