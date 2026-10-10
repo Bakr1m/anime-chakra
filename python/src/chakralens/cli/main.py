@@ -4,7 +4,12 @@ from pathlib import Path
 
 import typer
 
+from chakralens.bench.bench import app as bench_app
+from chakralens.cli.run import app as run_app
+
 app = typer.Typer(help="Chakra Lens lab + desktop tools.")
+app.add_typer(run_app)
+app.add_typer(bench_app)
 
 
 @app.command()
