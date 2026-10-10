@@ -10,7 +10,7 @@
 - [x] Phase 7: web jutsu
 - [x] Phase 8: visual QA
 - [x] Phase 9: python renderer + CLI
-- [ ] Phase 10: ML + real-data tooling
+- [x] Phase 10: ML + real-data tooling
 - [ ] Phase 11: stretch + polish
 - [ ] Phase 12: containers + phone
 - [ ] Phase 13: CI/CD + docs
