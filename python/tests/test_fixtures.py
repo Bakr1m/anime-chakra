@@ -13,7 +13,12 @@ SPEC = load_spec()
 
 
 def _load() -> list[dict]:
-    return [json.loads(p.read_text(encoding="utf-8")) for p in sorted(FIXTURES.glob("*.json"))]
+    docs = []
+    for p in sorted(FIXTURES.glob("*.json")):
+        doc = json.loads(p.read_text(encoding="utf-8"))
+        if "samples" in doc:  # gesture fixtures only (see mlp_vectors.json)
+            docs.append(doc)
+    return docs
 
 
 def test_fixture_count() -> None:

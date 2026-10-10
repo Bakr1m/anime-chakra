@@ -25,7 +25,9 @@ function close(a: unknown, b: unknown, path = ''): void {
   }
 }
 
-const files = readdirSync(DIR).filter((f) => f.endsWith('.json'));
+const files = readdirSync(DIR).filter(
+  (f) => f.endsWith('.json') && f !== 'mlp_vectors.json',
+);
 
 describe('parity with python fixtures', () => {
   it('has fixtures', () => {
