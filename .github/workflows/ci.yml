@@ -97,7 +97,9 @@ jobs:
 
   docker:
     needs: [web, python, parity, e2e]
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    # CD on every push and same-repo PR. Fork PRs lack secret access, so they
+    # run checks only; the docker job is skipped for them.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -125,7 +127,8 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ matrix.image.name }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha
+            type=sha,format=long
+            type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
       - uses: docker/build-push-action@v6
@@ -140,15 +143,17 @@ jobs:
       - name: smoke test (web)
         if: matrix.image.smoke == 'web'
         run: |
-          docker run -d --rm -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest
+          IMG=${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:sha-${{ github.sha }}
+          docker run -d --rm -p 8080:8080 "$IMG"
           sleep 5
           curl -fsS http://127.0.0.1:8080/healthz
           curl -fsS http://127.0.0.1:8080/ -o /dev/null
       - name: smoke test (lab)
         if: matrix.image.smoke == 'lab'
         run: |
-          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest --help
-          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:latest evaluate --n-per-class 10
+          IMG=${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:sha-${{ github.sha }}
+          docker run --rm "$IMG" --help
+          docker run --rm "$IMG" evaluate --n-per-class 10
 
   pages:
     needs: [web, python, parity, e2e]
