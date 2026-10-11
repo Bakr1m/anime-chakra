@@ -39,17 +39,22 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
+  // NOTE: match by URL string against the named cache. Matching the raw
+  // Request object missed cached bundles in the wild (header/Vary
+  // sensitivity); string matching is proven by the e2e cache probes.
   event.respondWith(
-    caches.match(req).then(
-      (hit) =>
-        hit ||
-        fetch(req).then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(VERSION).then((c) => c.put(req, copy));
-          }
-          return res;
-        }),
+    caches.open(VERSION).then((cache) =>
+      cache.match(req.url, { ignoreSearch: true }).then(
+        (hit) =>
+          hit ||
+          fetch(req).then((res) => {
+            if (res.ok) {
+              const copy = res.clone();
+              cache.put(req, copy);
+            }
+            return res;
+          }),
+      ),
     ),
   );
 });

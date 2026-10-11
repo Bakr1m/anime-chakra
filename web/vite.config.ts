@@ -5,7 +5,7 @@ const phoneSsl = process.env['PHONE_SSL'] === '1';
 
 export default defineConfig({
   base: process.env['PAGES_BASE'] ?? '/',
-  build: { outDir: 'dist', sourcemap: true },
+  build: { outDir: 'dist', sourcemap: true, manifest: true },
   plugins: phoneSsl ? [basicSsl()] : [],
   server: {
     host: '0.0.0.0',
