@@ -4,27 +4,28 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from .features import HandFeatures, extract_hand, two_hand_features
 
 LABEL_NONE = "none"
 
 
-def load_spec(path: str | Path | None = None) -> dict:
+def load_spec(path: str | Path | None = None) -> dict[str, Any]:
     if path is None:
         path = Path(__file__).resolve().parents[4] / "spec" / "gestures.json"
     with open(path, encoding="utf-8") as f:
         return json.load(f)  # type: ignore[no-any-return]
 
 
-def _rules_for(spec: dict, jutsu_id: str) -> dict:
+def _rules_for(spec: dict[str, Any], jutsu_id: str) -> dict[str, Any]:
     for j in spec["jutsu"]:
         if j["id"] == jutsu_id:
-            return dict(j["rules"])
+            return dict[str, Any](j["rules"])
     raise KeyError(jutsu_id)
 
 
-def match_rasengan(feat: HandFeatures, rules: dict) -> bool:
+def match_rasengan(feat: HandFeatures, rules: dict[str, Any]) -> bool:
     return (
         float(rules["opennessMin"]) <= feat.openness <= float(rules["opennessMax"])
         and feat.spread_mean <= float(rules["spreadMax"])
@@ -32,7 +33,7 @@ def match_rasengan(feat: HandFeatures, rules: dict) -> bool:
     )
 
 
-def match_chidori(feat: HandFeatures, rules: dict) -> bool:
+def match_chidori(feat: HandFeatures, rules: dict[str, Any]) -> bool:
     four = min(
         feat.extension["index"],
         feat.extension["middle"],
@@ -47,7 +48,7 @@ def match_chidori(feat: HandFeatures, rules: dict) -> bool:
     )
 
 
-def match_katon(a: HandFeatures, b: HandFeatures, two: dict, rules: dict) -> bool:
+def match_katon(a: HandFeatures, b: HandFeatures, two: dict[str, Any], rules: dict[str, Any]) -> bool:
     idx_mid = min(
         a.extension["index"], a.extension["middle"], b.extension["index"], b.extension["middle"]
     )
@@ -61,7 +62,7 @@ def match_katon(a: HandFeatures, b: HandFeatures, two: dict, rules: dict) -> boo
     )
 
 
-def match_bunshin(a: HandFeatures, b: HandFeatures, two: dict, rules: dict) -> bool:
+def match_bunshin(a: HandFeatures, b: HandFeatures, two: dict[str, Any], rules: dict[str, Any]) -> bool:
     ext = min(
         a.extension["index"], a.extension["middle"], b.extension["index"], b.extension["middle"]
     )
@@ -73,12 +74,12 @@ def match_bunshin(a: HandFeatures, b: HandFeatures, two: dict, rules: dict) -> b
     )
 
 
-def classify(hands: list[list[dict]], spec: dict | None = None) -> tuple[str, float]:
+def classify(hands: list[list[dict[str, Any]]], spec: dict[str, Any] | None = None) -> tuple[str, float]:
     """Classify 1-2 hands. Returns (label, confidence). Two-hand jutsus outrank one-hand."""
     spec = spec or load_spec()
-    feats = [extract_hand(h) for h in hands]  # type: ignore[arg-type]
+    feats = [extract_hand(h) for h in hands]
     if len(feats) == 2:
-        two = two_hand_features(hands[0], hands[1])  # type: ignore[arg-type]
+        two = two_hand_features(hands[0], hands[1])
         if match_bunshin(feats[0], feats[1], two, _rules_for(spec, "bunshin")):
             return ("bunshin", 1.0)
         if match_katon(feats[0], feats[1], two, _rules_for(spec, "katon")):

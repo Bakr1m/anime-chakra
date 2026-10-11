@@ -33,7 +33,7 @@ class HandTracker:
         self._landmarker: object | None = None
 
     def start(self) -> None:
-        import mediapipe as mp  # type: ignore[import-untyped]
+        import mediapipe as mp
 
         base = mp.tasks.BaseOptions(model_asset_path=str(self.model_path))
         options = mp.tasks.vision.HandLandmarkerOptions(
@@ -44,7 +44,7 @@ class HandTracker:
         self._landmarker = mp.tasks.vision.HandLandmarker.create_from_options(options)
 
     def detect(self, image_bgr: NDArray[np.uint8], timestamp_ms: int) -> list[DetectedHand]:
-        import mediapipe as mp  # type: ignore[import-untyped]
+        import mediapipe as mp
 
         if self._landmarker is None:
             raise RuntimeError("tracker not started")
@@ -52,7 +52,7 @@ class HandTracker:
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
         landmarker = self._landmarker
         assert hasattr(landmarker, "detect_for_video")
-        result = landmarker.detect_for_video(mp_image, timestamp_ms)  # type: ignore[union-attr]
+        result = landmarker.detect_for_video(mp_image, timestamp_ms)
         out: list[DetectedHand] = []
         hands = getattr(result, "hand_landmarks", []) or []
         handed = getattr(result, "handedness", []) or []

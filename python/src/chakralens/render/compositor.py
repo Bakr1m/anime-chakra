@@ -52,8 +52,10 @@ def disc_mask(size: int, radius_frac: float = 1.0) -> NDArray[np.float32]:
     """Soft disc alpha mask, size x size."""
     yy, xx = np.mgrid[0:size, 0:size].astype(np.float32)
     c = (size - 1) / 2.0
+    from typing import cast as _cast
+
     r = np.sqrt((xx - c) ** 2 + (yy - c) ** 2) / (c * radius_frac)
-    return np.clip(1.0 - r, 0.0, 1.0).astype(np.float32)
+    return _cast("NDArray[np.float32]", np.clip(1.0 - r, 0.0, 1.0).astype(np.float32))
 
 
 def paste_add(

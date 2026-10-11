@@ -58,7 +58,7 @@ def generate(out_dir: Path, spec_path: Path | None = None) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     for fixture_id, label, hands_spec in CASES:
-        hands = [preset(name, seed=seed, **kwargs) for name, seed, kwargs in hands_spec]  # type: ignore[arg-type]
+        hands = [preset(name, seed=seed, **kwargs) for name, seed, kwargs in hands_spec]
         predicted, confidence = classify(hands, spec)
         assert predicted == label, f"{fixture_id}: rules give {predicted}, expected {label}"
         samples = []

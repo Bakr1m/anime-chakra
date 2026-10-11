@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -20,7 +21,7 @@ class JutsuState:
         confidence: float,
         now: float,
         dt: float,
-        spec: dict,
+        spec: dict[str, Any],
     ) -> tuple[str | None, float]:
         """Feed one frame. Returns (active_id, charge 0..1)."""
         rel = spec["reliability"]

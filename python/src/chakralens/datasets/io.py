@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from chakralens.datasets.synth import normalize
 
@@ -26,7 +27,7 @@ VALID_LABELS = {
 TRAIN_LABELS = {"rasengan", "chidori", "tiger", "cross", "open", "fist", "other"}
 
 
-def validate_sample(doc: dict) -> list[str]:
+def validate_sample(doc: dict[str, Any]) -> list[str]:
     """Return a list of problems (empty = valid)."""
     problems: list[str] = []
     if doc.get("version") != 1:
@@ -52,7 +53,7 @@ def validate_sample(doc: dict) -> list[str]:
     return problems
 
 
-def sample_to_training(doc: dict) -> tuple[list[float], str] | None:
+def sample_to_training(doc: dict[str, Any]) -> tuple[list[float], str] | None:
     """First hand -> (normalized 63-dim, class). None when unusable for training."""
     if validate_sample(doc):
         return None

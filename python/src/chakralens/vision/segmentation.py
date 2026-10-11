@@ -23,7 +23,7 @@ class Segmentation:
         self._frame = 0
 
     def start(self) -> None:
-        import mediapipe as mp  # type: ignore[import-untyped]
+        import mediapipe as mp
 
         base = mp.tasks.BaseOptions(model_asset_path=str(self.model_path))
         options = mp.tasks.vision.ImageSegmenterOptions(
@@ -35,7 +35,7 @@ class Segmentation:
 
     def mask(self, image_bgr: NDArray[np.uint8], timestamp_ms: int) -> NDArray[np.bool_] | None:
         """Person mask, updated every 2nd frame; None when unavailable."""
-        import mediapipe as mp  # type: ignore[import-untyped]
+        import mediapipe as mp
 
         if self._segmenter is None:
             raise RuntimeError("segmenter not started")
@@ -46,7 +46,7 @@ class Segmentation:
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
         segmenter = self._segmenter
         assert hasattr(segmenter, "segment_for_video")
-        result = segmenter.segment_for_video(mp_image, timestamp_ms)  # type: ignore[union-attr]
+        result = segmenter.segment_for_video(mp_image, timestamp_ms)
         category = getattr(result, "category_mask", None)
         if category is None:
             return None

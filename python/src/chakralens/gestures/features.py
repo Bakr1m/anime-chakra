@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, cast
+from typing import Any
 
 EPS = 1e-6
 
@@ -27,7 +27,7 @@ def to_point(p: Landmark) -> Point:
     """Accept dicts {x,y,z} or sequences."""
     if isinstance(p, Mapping):
         return (float(p["x"]), float(p["y"]), float(p["z"]))
-    seq = list(cast(Sequence[Any], p))
+    seq = list(p)
     return (float(seq[0]), float(seq[1]), float(seq[2]))
 
 

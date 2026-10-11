@@ -20,7 +20,8 @@ HIDDEN = 64
 def softmax(logits: np.ndarray) -> np.ndarray:
     m = logits - logits.max(axis=1, keepdims=True)
     e = np.exp(m)
-    return e / e.sum(axis=1, keepdims=True)
+    out: np.ndarray = e / e.sum(axis=1, keepdims=True)
+    return out
 
 
 def forward(xs: np.ndarray, model: dict[str, Any]) -> np.ndarray:
@@ -41,7 +42,7 @@ def train(
     max_iter: int = 400,
 ) -> tuple[dict[str, Any], dict[str, float]]:
     """Train on synthetic data. Returns (model_json, metrics)."""
-    from sklearn.neural_network import MLPClassifier  # type: ignore[import-untyped]
+    from sklearn.neural_network import MLPClassifier
 
     x = np.array(xs, dtype=np.float64)
     label_to_idx = {c: i for i, c in enumerate(CLASSES)}
