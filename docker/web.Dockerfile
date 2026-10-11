@@ -4,6 +4,7 @@ WORKDIR /app
 COPY web/package.json web/package-lock.json ./web/
 COPY spec/ ./spec/
 COPY models-export/ ./models-export/
+COPY scripts/build-sw.mjs ./scripts/build-sw.mjs
 RUN cd web && npm ci
 COPY web/ ./web/
 RUN cd web && npm run build
