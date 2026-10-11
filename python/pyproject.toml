@@ -19,7 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = ["opencv-python>=4.9"]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.11", "numpy", "scikit-learn"]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff==0.17.0", "mypy==2.4.0", "numpy", "scikit-learn"]
 
 [project.scripts]
 chakralens = "chakralens.cli.main:app"

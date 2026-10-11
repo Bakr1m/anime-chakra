@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -30,7 +30,8 @@ def forward(xs: np.ndarray, model: dict[str, Any]) -> np.ndarray:
     w2 = np.array(model["W2"], dtype=np.float64)
     b2 = np.array(model["b2"], dtype=np.float64)
     hidden = np.maximum(0.0, xs.astype(np.float64) @ w1 + b1)
-    return softmax(hidden @ w2 + b2)
+    out: np.ndarray = softmax(hidden @ w2 + b2)
+    return out
 
 
 def train(
@@ -80,7 +81,7 @@ def save(model: dict[str, Any], path: Path) -> None:
 
 def load(path: Path) -> dict[str, Any]:
     with open(path, encoding="utf-8") as f:
-        data = json.load(f)
+        data = cast("dict[str, Any]", json.load(f))
     assert data["classes"] == list(CLASSES)
     assert data["inputDim"] == 63
     assert len(data["W1"]) == 63 and len(data["W1"][0]) == HIDDEN

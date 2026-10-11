@@ -43,7 +43,9 @@ class Compositor:
             self.canvas = 1.0 - (1.0 - self.canvas) * (1.0 - blurred * strength)
 
     def frame(self) -> NDArray[np.uint8]:
-        return (np.clip(self.canvas, 0.0, 1.0) * 255.0).astype(np.uint8)
+        from typing import cast as _cast
+
+        return _cast("NDArray[np.uint8]", (np.clip(self.canvas, 0.0, 1.0) * 255.0).astype(np.uint8))
 
 
 def disc_mask(size: int, radius_frac: float = 1.0) -> NDArray[np.float32]:

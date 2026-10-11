@@ -9,7 +9,7 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 import typer
 
@@ -30,12 +30,12 @@ def extract_video(
     label: str,
     detect: Callable[[object, int], list[Detected]],
     every: int = 3,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Decode with OpenCV, run detect(frame_bgr, ms) every Nth frame."""
     import cv2
 
     cap = cv2.VideoCapture(str(video))
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     index = 0
     while True:
         ok, frame = cap.read()
@@ -95,7 +95,7 @@ def extract_command(
             if not clips:
                 typer.echo(f"skip {label_dir.name}: no videos")
                 continue
-            samples: list[dict] = []
+            samples: list[dict[str, Any]] = []
             for clip in clips:
                 found = extract_video(clip, label_dir.name, detect, every=every)
                 samples.extend(found)

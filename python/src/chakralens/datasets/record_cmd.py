@@ -6,13 +6,14 @@ import json
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import typer
 
 app = typer.Typer(help="Record labelled landmark samples.")
 
 
-def write_samples(samples: list[dict], out: Path) -> Path:
+def write_samples(samples: list[dict[str, Any]], out: Path) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         f.writelines(json.dumps(sample) + "\n" for sample in samples)
@@ -39,7 +40,7 @@ def record_command(
         typer.echo(str(exc))
         raise typer.Exit(2)
     cam = ThreadedCamera(camera=camera).start()
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     deadline = time.time() + seconds
     typer.echo(f"recording {label} for {seconds}s: hold the sign...")
     try:

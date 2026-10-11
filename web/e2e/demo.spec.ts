@@ -60,7 +60,7 @@ test('start screen loads with privacy notice', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/Chakra/);
   await expect(page.locator('.start-screen')).toBeVisible();
-  await expect(page.locator('.privacy')).toContainText('runs on your device');
+  await expect(page.getByText('runs on your device')).toBeVisible();
   const canvas = page.locator('.stage canvas');
   await expect(canvas).toHaveCount(0);
 });
@@ -77,5 +77,5 @@ test('offline reload works after first load', async ({ page, context }) => {
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('.start-screen')).toBeVisible();
-  await expect(page.locator('.privacy')).toContainText('runs on your device');
+  await expect(page.getByText('runs on your device')).toBeVisible();
 });
