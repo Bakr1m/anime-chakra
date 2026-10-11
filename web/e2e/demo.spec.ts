@@ -74,6 +74,8 @@ test('offline reload works after first load', async ({ page, context }) => {
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
     timeout: 15000,
   });
+  // bundles are precached at install (scripts/build-sw.mjs), so going
+  // offline here is deterministic - no runtime-cache race.
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('.start-screen')).toBeVisible();
