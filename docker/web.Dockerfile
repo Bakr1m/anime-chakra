@@ -1,5 +1,5 @@
 # Chakra Lens web image: Vite build -> nginx-unprivileged on :8080, offline-ready.
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 COPY web/package.json web/package-lock.json ./web/
 COPY spec/ ./spec/
