@@ -26,12 +26,14 @@ export class OverlayRenderer {
   private H = 720;
 
   constructor(canvas: HTMLCanvasElement) {
-    const demo = typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo');
+    // preserveDrawingBuffer is required for any 2D pixel readback of the GL
+    // canvas: the ?debug=1 stats probe and the camera orientation e2e both
+    // depend on it. Cost is negligible at this scene complexity.
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: false,
       powerPreference: 'high-performance',
-      preserveDrawingBuffer: demo,
+      preserveDrawingBuffer: true,
     });
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
@@ -63,6 +65,10 @@ export class OverlayRenderer {
   attachVideo(video: HTMLVideoElement): void {
     const tex = new THREE.VideoTexture(video);
     tex.colorSpace = THREE.SRGBColorSpace;
+    // NOTE: demo DataTextures need flipY=true to match, but VideoTexture
+    // uploads already Flipped-Y relative to them: with flipY=true the live
+    // image renders rotated 180 degrees (proven by the L/R camera probe).
+    tex.flipY = false;
     this.attachTexture(tex, video.videoWidth || 1280, video.videoHeight || 720);
   }
 
