@@ -328,7 +328,15 @@ async function onStart(): Promise<void> {
   tracker.onFallback = (msg) => {
     if (labelEl) labelEl.textContent = msg;
   };
-  await tracker.init().catch(() => null);
+  // Never fail silently: a missing /models/* used to mean permanently zero
+  // hands with no feedback. Surface loading state and hard errors in the HUD.
+  if (labelEl) labelEl.textContent = 'loading hand tracking…';
+  try {
+    await tracker.init();
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    if (labelEl) labelEl.textContent = `Hand tracking failed to load (${reason}). Reload when online.`;
+  }
   quality.delegate = tracker.delegate ?? 'unavailable';
 
   const liveSmoothers: LandmarkSmoother[] = [];
@@ -406,7 +414,7 @@ async function onStart(): Promise<void> {
     );
     particles.update(dt);
     renderer.render(dt);
-    if (labelEl) labelEl.textContent = active ?? label;
+    if (labelEl && tracker.ready) labelEl.textContent = active ?? label;
     cards.update(active, charge);
     overlay.draw(smoothed, active ?? label, charge, quality.fps);
     requestAnimationFrame(loop);
