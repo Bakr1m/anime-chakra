@@ -11,6 +11,11 @@ python3 -m venv .venv && .venv/bin/pip install -e "./python[dev]"
 ./scripts/fetch-models.sh
 ```
 
+The web build copies `models/` into the app (`copy-models.mjs` pre-build
+step) because hand tracking loads them from `/models/*` at runtime. A build
+without them succeeds with a warning but ships dead tracking, and the
+`models.spec.ts` e2e guard fails the build pipeline.
+
 Local checks before every commit: `make check` (web lint+typecheck+unit,
 python ruff+mypy+pytest), `make parity`, and `make e2e` if you touched
 rendering. One logical step per commit, Conventional Commits
