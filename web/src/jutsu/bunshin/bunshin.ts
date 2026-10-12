@@ -40,8 +40,10 @@ export const CLONE_FRAG = /* glsl */ `
   uniform vec2 uShift;
   uniform float uOpacity;
   uniform float uDissolve;
+  uniform float uMirror;
   void main() {
     vec2 uv = vUv * uRepeat + uBaseOffset + uShift;
+    uv.x = mix(uv.x, 1.0 - uv.x, uMirror);
     vec4 vid = texture2D(uVideo, uv);
     float m = texture2D(uMask, uv).r;
     float gray = dot(vid.rgb, vec3(0.33));
@@ -106,6 +108,7 @@ export class KageBunshin implements Jutsu {
             uShift: { value: new THREE.Vector2(side * 0.18, 0) },
             uOpacity: { value: 0.85 },
             uDissolve: { value: 0 },
+            uMirror: { value: 0 },
           },
           transparent: true,
           depthWrite: false,
@@ -156,6 +159,7 @@ export class KageBunshin implements Jutsu {
     const tr = ctx.renderer.videoTransform;
     for (const c of this.clones) {
       if (this.maskTex) c.mat.uniforms['uMask']!.value = this.maskTex;
+      c.mat.uniforms['uMirror']!.value = ctx.mirrored ? 1 : 0;
       (c.mat.uniforms['uRepeat']!.value as THREE.Vector2).set(tr.repeat[0], tr.repeat[1]);
       (c.mat.uniforms['uBaseOffset']!.value as THREE.Vector2).set(tr.offset[0], tr.offset[1]);
       // lagged horizontal parallax from the anchor history

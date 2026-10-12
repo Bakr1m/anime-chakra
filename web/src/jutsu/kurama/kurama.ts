@@ -10,11 +10,13 @@ const FRAG = /* glsl */ `
   uniform sampler2D uMask;
   uniform float uTime;
   uniform float uCharge;
+  uniform float uMirror;
   ${NOISE_GLSL}
   void main() {
     // animated displacement for licking flames
     vec2 wob = vec2(fbm3(vUv * 6.0 + vec2(0.0, -uTime * 1.4)) - 0.5);
     vec2 uv = vUv + wob * 0.03;
+    uv.x = mix(uv.x, 1.0 - uv.x, uMirror);
     float m = texture2D(uMask, uv).r;
     // edge band: inside minus eroded inside (4-tap)
     float e = 0.012;
@@ -61,6 +63,7 @@ export class KuramaCloak implements Jutsu {
         uMask: { value: null },
         uTime: { value: 0 },
         uCharge: { value: 0 },
+        uMirror: { value: 0 },
       },
       transparent: true,
       depthWrite: false,
@@ -96,6 +99,7 @@ export class KuramaCloak implements Jutsu {
     this.mat.uniforms['uMask']!.value = this.mask;
     this.mat.uniforms['uTime']!.value = time;
     this.mat.uniforms['uCharge']!.value = charge;
+    this.mat.uniforms['uMirror']!.value = ctx.mirrored ? 1 : 0;
     // rising embers along the silhouette
     const n = Math.ceil(3 * ctx.quality.particleScale);
     for (let i = 0; i < n; i++) {

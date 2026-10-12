@@ -9,6 +9,15 @@ export interface DetectedHand {
 
 export type Delegate = 'GPU' | 'CPU';
 
+/** Mirror a detection for front-camera ('user') facing: selfie previews are
+ *  mirrored, so x flips and handedness swaps to stay truthful. Pure. */
+export function mirrorHand(hand: DetectedHand): DetectedHand {
+  return {
+    landmarks: hand.landmarks.map((p) => ({ x: 1 - p.x, y: p.y, z: p.z })),
+    handedness: hand.handedness === 'Left' ? 'Right' : 'Left',
+  };
+}
+
 interface HandLandmarkerLike {
   detectForVideo(video: unknown, nowMs: number): { landmarks?: number[][][]; handedness?: { categoryName: string }[][] };
   close(): void;

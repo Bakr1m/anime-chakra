@@ -20,6 +20,8 @@ export interface JutsuContext {
   rng: () => number;
   /** current scene time in seconds (demo-safe; do not use performance.now) */
   time: number;
+  /** front-camera selfie preview is mirrored; shaders sampling video/mask must flip u */
+  mirrored: boolean;
 }
 
 export interface JutsuRequires {

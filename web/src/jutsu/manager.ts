@@ -41,6 +41,13 @@ export class JutsuManager implements JutsuContext {
   audio: SynthAudio;
   rng: () => number = Math.random;
   time = 0;
+  /** front-camera selfie preview is mirrored; face coords flip to match hands */
+  mirrored = false;
+
+  /** mirror a normalized camera-space x into the (possibly mirrored) view */
+  private fx(u: number): number {
+    return this.mirrored ? 1 - u : u;
+  }
   seg = new Segmentation();
   face = new FaceTracker();
   private jutsu: Record<string, Jutsu> = {};
@@ -124,7 +131,7 @@ export class JutsuManager implements JutsuContext {
       if (tip && eyes.length > 0) {
         let near = false;
         for (const e of eyes) {
-          if (Math.hypot(tip.x - e.ix, tip.y - e.iy) < 1.2 * Math.max(e.width, 1e-3)) {
+          if (Math.hypot(tip.x - this.fx(e.ix), tip.y - e.iy) < 1.2 * Math.max(e.width, 1e-3)) {
             near = true;
             break;
           }
@@ -195,7 +202,7 @@ export class JutsuManager implements JutsuContext {
         const W = this.renderer.width;
         const H = this.renderer.height;
         k.mouth = {
-          x: this.face.last.mouthX * W,
+          x: this.fx(this.face.last.mouthX) * W,
           y: this.face.last.mouthY * H,
           headPx: this.face.last.headSize * W,
         };
@@ -220,14 +227,14 @@ export class JutsuManager implements JutsuContext {
           let best = this.face.eyes[0];
           let bestD = Infinity;
           for (const e of this.face.eyes) {
-            const d = tip ? Math.hypot(tip.x - e.ix, tip.y - e.iy) : Infinity;
+            const d = tip ? Math.hypot(tip.x - this.fx(e.ix), tip.y - e.iy) : Infinity;
             if (d < bestD) {
               bestD = d;
               best = e;
             }
           }
           if (best) {
-            s.iris = { x: best.ix * W, y: best.iy * H, size: best.width * W * 1.7 };
+            s.iris = { x: this.fx(best.ix) * W, y: best.iy * H, size: best.width * W * 1.7 };
           }
         }
       }

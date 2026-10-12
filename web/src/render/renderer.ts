@@ -82,6 +82,15 @@ export class OverlayRenderer {
     this.layoutVideo(vw, vh);
   }
 
+  /** front-camera selfie preview: mirrored like every camera app */
+  mirrored = false;
+
+  setMirrored(mirror: boolean): void {
+    this.mirrored = mirror;
+    if (this.videoQuad) {
+      this.videoQuad.scale.set(this.mirrored ? -this.W : this.W, this.H, 1);
+    }
+  }
   /** cover-fit the video quad into the pixel-space frustum */
   layoutVideo(vw: number, vh: number): void {
     if (!this.videoQuad || !this.videoTex) return;
@@ -96,7 +105,7 @@ export class OverlayRenderer {
     }
     this.videoTex.repeat.set(rx, ry);
     this.videoTex.offset.set((1 - rx) / 2, (1 - ry) / 2);
-    this.videoQuad.scale.set(this.W, this.H, 1);
+    this.videoQuad.scale.set(this.mirrored ? -this.W : this.W, this.H, 1);
   }
 
   resize(w: number, h: number, pixelRatio = 1): void {
@@ -114,7 +123,7 @@ export class OverlayRenderer {
     this.camera.bottom = this.H;
     this.camera.updateProjectionMatrix();
     if (this.videoQuad) {
-      this.videoQuad.scale.set(this.W, this.H, 1);
+      this.videoQuad.scale.set(this.mirrored ? -this.W : this.W, this.H, 1);
       this.videoQuad.position.set(this.W / 2, this.H / 2, -5);
     }
     this.flashMesh.position.set(this.W / 2, this.H / 2, 9);

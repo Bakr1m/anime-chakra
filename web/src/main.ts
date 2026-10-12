@@ -235,7 +235,13 @@ async function onStart(): Promise<void> {
   const particles = new ParticlePool(1024);
 
   hud.querySelector<HTMLButtonElement>('.flip')?.addEventListener('click', () => {
-    void camera.flip().catch(() => undefined);
+    void camera
+      .flip()
+      .then(() => {
+        syncMirror();
+        fit();
+      })
+      .catch(() => undefined);
   });
   const muteBtn = hud.querySelector<HTMLButtonElement>('.mute');
   const paintMute = (): void => {
@@ -314,7 +320,7 @@ async function onStart(): Promise<void> {
     hud.appendChild(btn);
   }
 
-  const { HandTracker } = await import('./vision/hands');
+  const { HandTracker, mirrorHand } = await import('./vision/hands');
   const tracker = new HandTracker();
   tracker.onFallback = (msg) => {
     if (labelEl) labelEl.textContent = msg;
@@ -325,6 +331,12 @@ async function onStart(): Promise<void> {
   const liveSmoothers: LandmarkSmoother[] = [];
   renderer.fx.add(particles.points);
   const manager = new JutsuManager(renderer, particles, quality, audio);
+  const syncMirror = (): void => {
+    const mirror = camera.facing === 'user';
+    renderer.setMirrored(mirror);
+    manager.mirrored = mirror;
+  };
+  syncMirror();
   particles.setPixelRatio(quality.pixelRatio);
   const state = new JutsuState();
   const overlay = new DebugOverlay(stage);
@@ -363,7 +375,9 @@ async function onStart(): Promise<void> {
     quality.update(dt * 1000, now);
     renderer.setBloomEnabled(quality.bloomEnabled);
     if (quality.level > 0) fit();
-    const hands = tracker.ready ? tracker.detect(hiddenVideo, now) : [];
+    const raw = tracker.ready ? tracker.detect(hiddenVideo, now) : [];
+    // front camera: mirror detections to match the mirrored preview
+    const hands = camera.facing === 'user' ? raw.map((h) => mirrorHand(h)) : raw;
     const smoothed = hands.map((h, i) => {
       liveSmoothers[i] ??= new LandmarkSmoother();
       return (liveSmoothers[i] as LandmarkSmoother).smooth(
