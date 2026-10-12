@@ -114,6 +114,8 @@ function exposeStats(canvas: HTMLCanvasElement, w: number, h: number): void {
   };
 }
 
+declare const __BUILD_ID__: string;
+
 function makeHud(): { hud: HTMLElement; labelEl: HTMLElement | null } {
   if (!app) throw new Error('#app missing');
   const hud = document.createElement('div');
@@ -127,7 +129,8 @@ function makeHud(): { hud: HTMLElement; labelEl: HTMLElement | null } {
       <option>bunshin</option><option>none</option><option>other</option>
     </select>
     <button type="button" class="rec">Record</button>
-    <span class="label"></span>`;
+    <span class="label"></span>
+    <span class="build" title="build id (proves which version this device runs)"></span>`;
   app.appendChild(hud);
   return { hud, labelEl: hud.querySelector<HTMLElement>('.label') };
 }
@@ -335,8 +338,15 @@ async function onStart(): Promise<void> {
     const mirror = camera.facing === 'user';
     renderer.setMirrored(mirror);
     manager.mirrored = mirror;
+    (window as unknown as Record<string, unknown>)['__chakraView'] = {
+      build: __BUILD_ID__,
+      facing: camera.facing,
+      mirrored: mirror,
+    };
   };
   syncMirror();
+  const buildEl = hud.querySelector<HTMLElement>('.build');
+  if (buildEl) buildEl.textContent = __BUILD_ID__;
   particles.setPixelRatio(quality.pixelRatio);
   const state = new JutsuState();
   const overlay = new DebugOverlay(stage);

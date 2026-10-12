@@ -130,3 +130,10 @@ html, body {
 .onboard.fade {
   opacity: 0;
 }
+
+.build {
+  font-size: 0.65rem;
+  opacity: 0.45;
+  font-family: monospace;
+  margin-left: auto;
+}
