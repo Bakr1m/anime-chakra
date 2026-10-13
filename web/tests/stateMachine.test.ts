@@ -56,6 +56,14 @@ describe('JutsuState', () => {
     expect(charges[charges.length - 1] as number).toBeGreaterThan(0.99);
   });
 
+  it('exposes streak telemetry', () => {
+    const st = new JutsuState();
+    expect(st.debugInfo).toEqual({ candidate: null, streak: 0 });
+    st.update('rasengan', 1.0, 1 / 30, 1 / 30, spec);
+    st.update('rasengan', 1.0, 2 / 30, 1 / 30, spec);
+    expect(st.debugInfo).toEqual({ candidate: 'rasengan', streak: 2 });
+  });
+
   it('cooldown blocks immediate retrigger', () => {
     const st = new JutsuState();
     activate(st, 'katon');

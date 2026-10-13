@@ -3,6 +3,8 @@ import { SynthAudio } from './audio/voices';
 import { demoBackground, demoEyeSpot, demoHands, demoMask } from './demo/driver';
 import { LandmarkSmoother } from './filters/oneEuro';
 import { classifyEnsemble } from './gestures/ensemble';
+import { extractHand } from './gestures/features';
+import { predict } from './gestures/mlp';
 import { getSpec } from './gestures/spec';
 import { JutsuState } from './gestures/stateMachine';
 import { JutsuManager } from './jutsu/manager';
@@ -431,12 +433,32 @@ async function onStart(): Promise<void> {
     if (labelEl && tracker.ready) labelEl.textContent = active ?? label;
     cards.update(active, charge);
     if (cleanName) cleanName.textContent = active ?? '';
+    // rule-input telemetry: pasting this line while holding a sign shows
+    // exactly which threshold fails (openness/spread/palm/extensions).
+    let featInfo = '';
+    if (overlay.enabled && smoothed[0]) {
+      try {
+        const f = extractHand(smoothed[0]);
+        const ext = ['thumb', 'index', 'middle', 'ring', 'pinky']
+          .map((k) => (f.extension[k] ?? 0).toFixed(2))
+          .join('/');
+        const [mlpLabel, mlpConf] = predict(smoothed[0]);
+        const st = state.debugInfo;
+        featInfo =
+          `open=${f.openness.toFixed(2)} spread=${f.spreadMean.toFixed(2)} ` +
+          `palm=${f.palmToCamera.toFixed(2)} ext=${ext} ` +
+          `horiz=${f.pointingHorizontal.toFixed(2)} up=${f.pointingUp.toFixed(2)} ` +
+          `mlp=${mlpLabel}:${mlpConf.toFixed(2)} streak=${st.candidate ?? '-'}/${st.streak}`;
+      } catch {
+        featInfo = 'feature-error';
+      }
+    }
     overlay.draw(
       smoothed,
       active ?? label,
       charge,
       quality.fps,
-      `hands:${hands.length} empty:${emptyStreak} delegate:${tracker.delegate ?? 'none'}`,
+      `hands:${hands.length} empty:${emptyStreak} delegate:${tracker.delegate ?? 'none'} ${featInfo}`,
     );
     requestAnimationFrame(loop);
   };

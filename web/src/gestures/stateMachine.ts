@@ -9,6 +9,11 @@ export class JutsuState {
   private releaseStreak = 0;
   private candidate: string | null = null;
 
+  /** read-only telemetry for the ?debug=1 overlay (streak progress) */
+  get debugInfo(): { candidate: string | null; streak: number } {
+    return { candidate: this.candidate, streak: this.matchStreak };
+  }
+
   update(label: string, confidence: number, now: number, dt: number, spec: GestureSpec): [string | null, number] {
     const rel = spec.reliability;
     const confident =
