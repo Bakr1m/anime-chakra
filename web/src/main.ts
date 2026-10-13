@@ -331,8 +331,9 @@ async function onStart(): Promise<void> {
   // Never fail silently: a missing /models/* used to mean permanently zero
   // hands with no feedback. Surface loading state and hard errors in the HUD.
   if (labelEl) labelEl.textContent = 'loading hand tracking…';
+  const forceCpu = params.has('cpu');
   try {
-    await tracker.init();
+    await tracker.init(undefined, forceCpu ? 'CPU' : undefined);
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
     if (labelEl) labelEl.textContent = `Hand tracking failed to load (${reason}). Reload when online.`;
@@ -360,6 +361,18 @@ async function onStart(): Promise<void> {
   const overlay = new DebugOverlay(stage);
   const spec = getSpec();
   let last = performance.now();
+  let emptyStreak = 0;
+
+  // ?clean=1 minimal mode: clear camera, only the firing jutsu's name.
+  // Tapping the stage toggles the chrome back.
+  let cleanName: HTMLElement | null = null;
+  if (params.has('clean')) {
+    app.classList.add('clean');
+    cleanName = document.createElement('div');
+    cleanName.className = 'jutsu-name';
+    stage.appendChild(cleanName);
+    stage.addEventListener('click', () => app.classList.toggle('clean'));
+  }
 
   const fit = (): void => {
     const rect = stage.getBoundingClientRect();
@@ -405,6 +418,7 @@ async function onStart(): Promise<void> {
     });
     const [label, conf] = classifyEnsemble(smoothed, spec);
     const [active, charge] = state.update(label, conf, time, dt, spec);
+    emptyStreak = hands.length === 0 ? emptyStreak + 1 : 0;
     manager.update({ dt, time, hands: smoothed, video: hiddenVideo, label, charge, activeId: active });
     recorder.push(
       hands.map((h, i) => ({
@@ -416,7 +430,14 @@ async function onStart(): Promise<void> {
     renderer.render(dt);
     if (labelEl && tracker.ready) labelEl.textContent = active ?? label;
     cards.update(active, charge);
-    overlay.draw(smoothed, active ?? label, charge, quality.fps);
+    if (cleanName) cleanName.textContent = active ?? '';
+    overlay.draw(
+      smoothed,
+      active ?? label,
+      charge,
+      quality.fps,
+      `hands:${hands.length} empty:${emptyStreak} delegate:${tracker.delegate ?? 'none'}`,
+    );
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

@@ -137,3 +137,28 @@ html, body {
   font-family: monospace;
   margin-left: auto;
 }
+
+/* ?clean=1 minimal mode: chrome hides, only the jutsu name stays */
+.clean .hud,
+.clean .cards,
+.clean .onboard {
+  display: none;
+}
+
+.jutsu-name {
+  display: none;
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 12px #000;
+  pointer-events: none;
+}
+
+.clean .jutsu-name {
+  display: block;
+}

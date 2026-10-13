@@ -95,3 +95,22 @@ test('front camera displays mirrored, flip restores raw', async ({ page }) => {
   })()`);
   expect(playing).toBe(true);
 });
+
+test('clean mode hides chrome until tapped', async ({ page }) => {
+  await stubCamera(page);
+  await page.goto('/?clean=1');
+  await page.locator('.start-btn').click();
+  await page.waitForTimeout(2500);
+  const hidden = await page.evaluate(
+    () =>
+      getComputedStyle(document.querySelector('.hud') as Element).display === 'none' &&
+      getComputedStyle(document.querySelector('.cards') as Element).display === 'none' &&
+      document.querySelectorAll('.jutsu-name').length === 1,
+  );
+  expect(hidden).toBe(true);
+  await page.locator('.stage').click();
+  const back = await page.evaluate(
+    () => getComputedStyle(document.querySelector('.hud') as Element).display !== 'none',
+  );
+  expect(back).toBe(true);
+});

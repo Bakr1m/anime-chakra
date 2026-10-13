@@ -20,7 +20,7 @@ export class DebugOverlay {
     this.canvas.height = h;
   }
 
-  draw(hands: Landmark[][], label: string, charge: number, fps: number): void {
+  draw(hands: Landmark[][], label: string, charge: number, fps: number, extra = ''): void {
     if (!this.enabled) return;
     const { ctx } = this;
     const W = this.canvas.width;
@@ -29,6 +29,7 @@ export class DebugOverlay {
     ctx.fillStyle = '#0f0';
     ctx.font = '14px monospace';
     ctx.fillText(`${label} charge=${charge.toFixed(2)} fps=${fps.toFixed(0)}`, 8, 18);
+    if (extra) ctx.fillText(extra, 8, 36);
     ctx.strokeStyle = '#0f0';
     for (const hand of hands) {
       ctx.beginPath();

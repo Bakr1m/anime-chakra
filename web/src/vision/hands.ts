@@ -33,9 +33,19 @@ export class HandTracker {
     return this.landmarker !== null;
   }
 
-  /** Lazily imports tasks-vision so unit tests never touch the network. */
-  async init(modelPath = modelUrl('hand_landmarker.task')): Promise<Delegate> {
+  /** Lazily imports tasks-vision so unit tests never touch the network.
+   *  Pass force:'CPU' (?cpu=1) to skip the GPU attempt: diagnoses machines
+   *  where GPU init succeeds but per-frame inference returns nothing. */
+  async init(
+    modelPath = modelUrl('hand_landmarker.task'),
+    force?: Delegate,
+  ): Promise<Delegate> {
     const vision = await import('@mediapipe/tasks-vision');
+    if (force) {
+      this.landmarker = await this.create(vision, modelPath, force);
+      this.delegate = force;
+      return this.delegate;
+    }
     try {
       this.landmarker = await this.create(vision, modelPath, 'GPU');
       this.delegate = 'GPU';
