@@ -1,6 +1,6 @@
 # Chakra Lens
 
-> Side project — creative on-device ML experiment, not part of my Applied ML / Healthcare portfolio.
+> Side project — creative on-device ML experiment.
 
 Point your camera at your hands, make a Naruto hand sign, and watch the jutsu fire. Runs on your phone, in your browser, with nothing leaving your device.
 
