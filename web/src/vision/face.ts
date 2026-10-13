@@ -1,5 +1,6 @@
 // FaceLandmarker wrapper: mouth anchor for Katon, eye/iris for Sharingan.
 // Runs every 3rd frame only when a jutsu needs it. Optional like segmentation.
+import { modelUrl } from '../paths';
 export interface FaceAnchor {
   mouthX: number;
   mouthY: number;
@@ -30,7 +31,7 @@ export class FaceTracker {
     return this.landmarker !== null;
   }
 
-  async init(modelPath = '/models/face_landmarker.task'): Promise<void> {
+  async init(modelPath = modelUrl('face_landmarker.task')): Promise<void> {
     const vision = await import('@mediapipe/tasks-vision');
     const v = vision as unknown as {
       FilesetResolver: { forVisionTasks: (w: string) => Promise<unknown> };

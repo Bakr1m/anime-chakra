@@ -2,6 +2,7 @@
 // Runs every 2nd frame only when a jutsu needs it. Optional: null when the
 // model is missing (demo mode, offline first-load) and jutsus degrade.
 import * as THREE from 'three';
+import { modelUrl } from '../paths';
 
 export class Segmentation {
   private segmenter: {
@@ -21,7 +22,7 @@ export class Segmentation {
     return this.maskTex;
   }
 
-  async init(modelPath = '/models/selfie_segmenter.tflite'): Promise<void> {
+  async init(modelPath = modelUrl('selfie_segmenter.tflite')): Promise<void> {
     const vision = await import('@mediapipe/tasks-vision');
     const v = vision as unknown as {
       FilesetResolver: { forVisionTasks: (w: string) => Promise<unknown> };

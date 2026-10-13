@@ -1,6 +1,7 @@
 // HandLandmarker wrapper with GPU -> CPU fallback and a test seam.
 // Model path is served locally (public/models) so the app works offline.
 import type { Landmark } from '../gestures/features';
+import { modelUrl } from '../paths';
 
 export interface DetectedHand {
   landmarks: Landmark[];
@@ -33,7 +34,7 @@ export class HandTracker {
   }
 
   /** Lazily imports tasks-vision so unit tests never touch the network. */
-  async init(modelPath = '/models/hand_landmarker.task'): Promise<Delegate> {
+  async init(modelPath = modelUrl('hand_landmarker.task')): Promise<Delegate> {
     const vision = await import('@mediapipe/tasks-vision');
     try {
       this.landmarker = await this.create(vision, modelPath, 'GPU');
