@@ -19,9 +19,30 @@ export function mirrorHand(hand: DetectedHand): DetectedHand {
   };
 }
 
+interface NormalizedLandmark {
+  x: number;
+  y: number;
+  z: number;
+}
+
 interface HandLandmarkerLike {
-  detectForVideo(video: unknown, nowMs: number): { landmarks?: number[][][]; handedness?: { categoryName: string }[][] };
+  detectForVideo(
+    video: unknown,
+    nowMs: number,
+  ): { landmarks?: NormalizedLandmark[][]; handedness?: { categoryName: string }[][] };
   close(): void;
+}
+
+/** Convert one hand's raw landmarks to the app shape. MediaPipe Tasks
+ *  returns {x,y,z} objects (not arrays); array form is accepted defensively.
+ *  A wrong assumption here once collapsed every point to origin, so this is
+ *  unit-tested against the real API shape. */
+export function toLandmarks(raw: (NormalizedLandmark | number[])[]): Landmark[] {
+  return raw.map((p) =>
+    Array.isArray(p)
+      ? { x: p[0] ?? 0, y: p[1] ?? 0, z: p[2] ?? 0 }
+      : { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0 },
+  );
 }
 
 export class HandTracker {
@@ -80,7 +101,7 @@ export class HandTracker {
     const out: DetectedHand[] = [];
     const lists = res.landmarks ?? [];
     for (let i = 0; i < lists.length; i++) {
-      const pts = (lists[i] ?? []).map((p) => ({ x: p[0] ?? 0, y: p[1] ?? 0, z: p[2] ?? 0 }));
+      const pts = toLandmarks(lists[i] ?? []);
       const raw = res.handedness?.[i]?.[0]?.categoryName ?? 'Left';
       out.push({ landmarks: pts, handedness: raw === 'Right' ? 'Right' : 'Left' });
     }
