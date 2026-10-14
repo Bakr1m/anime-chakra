@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "notes": "Single source of truth. Thresholds shared by web (TS) and python. Never hard-code these twice.",
   "reliability": {
     "activateFrames": 6,
@@ -25,11 +25,12 @@
         "edge": "#1565C0"
       },
       "rules": {
-        "opennessMin": 0.4,
-        "opennessMax": 0.75,
-        "spreadMax": 0.45,
-        "palmToCameraMin": 0.5,
-        "allFingersSemiCurled": true
+        "opennessMin": 0.55,
+        "opennessMax": 0.96,
+        "spreadMin": 0.18,
+        "spreadMax": 0.5,
+        "thumbMin": 0.8,
+        "palmToCameraMin": 0.5
       }
     },
     {

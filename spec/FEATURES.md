@@ -75,6 +75,21 @@ relativeHeight = (wristA.y - wristB.y) / mean hand size (signed)
 
 Segment intersection uses the standard orientation test with epsilon `1e-9`.
 
+## 4b. Thumb-out feature (palm-vs-back discriminator)
+
+The palm normal cannot tell palm-forward from knuckles-forward head-on (it
+reads only knuckle layout). The thumb can: a cupped palm holds the thumb out
+sideways, a fist folds it across the knuckles.
+
+```
+thumbOut = dist3(thumbTip(4), palmCenter) / handSize
+```
+
+Calibrated on real hands (2026-10-12): cupped palm thumbOut ~ high with
+thumb extension >= 0.80; back-of-fist tucks at ~0.77 extension with narrow
+tip spread. Rasengan additionally gates spread from below (cupped splays
+tips, fists cluster them).
+
 ## 5. Rule inputs summary
 
 | Symbol | Formula |
@@ -92,7 +107,8 @@ Segment intersection uses the standard orientation test with epsilon `1e-9`.
 All thresholds live in `spec/gestures.json`. The rules:
 
 - **rasengan**: `openness in [opennessMin, opennessMax]`
-  AND `spreadMean <= spreadMax` AND `palmToCamera >= palmToCameraMin`.
+  AND `spreadMean in [spreadMin, spreadMax]`
+  AND `ext_thumb >= thumbMin` AND `palmToCamera >= palmToCameraMin`.
 - **chidori**: `min(ext_index, ext_middle, ext_ring, ext_pinky) >= fourFingersExtendedMin`
   AND `ext_thumb <= thumbTuckedMax` AND `spreadMean <= fingerSpreadMax`
   AND `pointingHorizontal >= pointingHorizontalMin`.
