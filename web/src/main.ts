@@ -3,7 +3,7 @@ import { SynthAudio } from './audio/voices';
 import { demoBackground, demoEyeSpot, demoHands, demoMask } from './demo/driver';
 import { LandmarkSmoother } from './filters/oneEuro';
 import { classifyEnsemble } from './gestures/ensemble';
-import { extractHand } from './gestures/features';
+import { extractHand, twoHandFeatures } from './gestures/features';
 import { predict } from './gestures/mlp';
 import { getSpec } from './gestures/spec';
 import { JutsuState } from './gestures/stateMachine';
@@ -449,6 +449,17 @@ async function onStart(): Promise<void> {
           `palm=${f.palmToCamera.toFixed(2)} ext=${ext} ` +
           `horiz=${f.pointingHorizontal.toFixed(2)} up=${f.pointingUp.toFixed(2)} ` +
           `mlp=${mlpLabel}:${mlpConf.toFixed(2)} streak=${st.candidate ?? '-'}/${st.streak}`;
+        if (smoothed[1]) {
+          const two = twoHandFeatures(smoothed[0], smoothed[1]);
+          const f2 = extractHand(smoothed[1]);
+          const ext2 = ['index', 'middle', 'ring', 'pinky']
+            .map((k) => (f2.extension[k] ?? 0).toFixed(2))
+            .join('/');
+          featInfo +=
+            ` | two wristD=${two.wristDistance.toFixed(2)} ` +
+            `cross=${two.crossAngle.toFixed(0)} xLines=${two.linesCross ? 1 : 0} ` +
+            `f2ext=${ext2} f2up=${f2.pointingUp.toFixed(2)}`;
+        }
       } catch {
         featInfo = 'feature-error';
       }

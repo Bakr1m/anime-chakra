@@ -53,7 +53,6 @@ export class JutsuManager implements JutsuContext {
   private jutsu: Record<string, Jutsu> = {};
   private current: Jutsu | null = null;
   private holdTime = 0;
-  private pipelinesFor: string | null = null;
 
   constructor(
     renderer: OverlayRenderer,
@@ -110,11 +109,27 @@ export class JutsuManager implements JutsuContext {
     return { x: px(cx), y: py(cy), size: Math.max(20, size) };
   }
 
-  private async ensurePipelines(activeId: string, seg: boolean, face: boolean): Promise<void> {
-    if (this.pipelinesFor === activeId) return;
-    this.pipelinesFor = activeId;
-    if (seg && !this.seg.ready) await this.seg.init().catch(() => undefined);
-    if (face && !this.face.ready) await this.face.init().catch(() => undefined);
+  private faceAttemptAt = -10;
+  private segAttemptAt = -10;
+
+  /** Start face/seg as soon as hands are visible — never gated on the
+   *  active jutsu. Gating startup on the active jutsu deadlocked Sharingan
+   *  permanently (it needs eyes to BECOME active). Attempts throttled to 5 s;
+   *  both pipelines self-throttle their per-frame work. Demo passes no video
+   *  and is unaffected. */
+  private primePipelines(f: FrameInput): void {
+    if (!f.video || f.hands.length === 0) return;
+    const nowS = performance.now() / 1000;
+    if (!this.face.ready && nowS - this.faceAttemptAt > 5) {
+      this.faceAttemptAt = nowS;
+      void this.face.init().catch(() => undefined);
+    }
+    if (f.hands.length === 2 && !this.seg.ready && nowS - this.segAttemptAt > 5) {
+      this.segAttemptAt = nowS;
+      void this.seg.init().catch(() => undefined);
+    }
+    if (this.face.ready) this.face.update(f.video, performance.now());
+    if (this.seg.ready) this.seg.update(f.video, performance.now());
   }
 
   /** Stretch-mode fusion: sharingan/kurama override the hand classifier. */
@@ -166,6 +181,7 @@ export class JutsuManager implements JutsuContext {
 
   update(f: FrameInput): void {
     this.time = f.time;
+    this.primePipelines(f);
     const forced = f.forceId ? (this.jutsu[f.forceId] ?? null) : null;
     const stretch = !forced && !f.demoMouth ? this.stretchId(f) : null;
     const wantId = forced?.id ?? stretch ?? f.activeId;
@@ -182,15 +198,7 @@ export class JutsuManager implements JutsuContext {
     const hand = f.hands[0];
     if (!hand) return;
     const anchor = this.anchorFor(hand);
-    const req = this.current.requires;
 
-    if ((req.segmentation === true || req.face === true) && f.video) {
-      void this.ensurePipelines(this.current.id, req.segmentation === true, req.face === true);
-      if (req.segmentation === true) this.seg.update(f.video, performance.now());
-      if (req.face === true) {
-        this.face.update(f.video, performance.now());
-      }
-    }
     if (this.current.id === 'bunshin') {
       (this.jutsu['bunshin'] as KageBunshin).setMask(this.seg.mask ?? this.fallbackMask());
     }
