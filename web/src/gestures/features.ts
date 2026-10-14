@@ -69,6 +69,7 @@ export interface HandFeatures {
   curl: Record<string, number>;
   openness: number;
   spreadMean: number;
+  thumbOut: number;
   palmToCamera: number;
   pointing: Vec3;
   pointingUp: number;
@@ -123,6 +124,8 @@ export function extractHand(landmarks: Landmark[]): HandFeatures {
     dist2(pts[16] as Vec3, pts[20] as Vec3) / handSize,
   ];
   const spreadMean = (spreads[0]! + spreads[1]! + spreads[2]!) / 3;
+  const thumbTip = pts[4] as Vec3;
+  const thumbOut = dist3(thumbTip, palmCenter) / handSize;
   let n = cross(sub(pts[5] as Vec3, wrist), sub(pts[17] as Vec3, wrist));
   const ln = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
   n = ln < EPS ? [0, 0, -1] : [n[0] / ln, n[1] / ln, n[2] / ln];
@@ -138,6 +141,7 @@ export function extractHand(landmarks: Landmark[]): HandFeatures {
     curl,
     openness,
     spreadMean,
+    thumbOut,
     palmToCamera,
     pointing,
     pointingUp: clamp(-pointing[1], -1, 1),

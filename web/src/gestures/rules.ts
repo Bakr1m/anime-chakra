@@ -8,7 +8,9 @@ export function matchRasengan(feat: HandFeatures, rules: JutsuRules): boolean {
   return (
     (rules['opennessMin'] as number) <= feat.openness &&
     feat.openness <= (rules['opennessMax'] as number) &&
+    (rules['spreadMin'] as number) <= feat.spreadMean &&
     feat.spreadMean <= (rules['spreadMax'] as number) &&
+    (feat.extension['thumb'] ?? 0) >= (rules['thumbMin'] as number) &&
     feat.palmToCamera >= (rules['palmToCameraMin'] as number)
   );
 }

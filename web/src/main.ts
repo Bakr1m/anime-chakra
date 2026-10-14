@@ -444,9 +444,13 @@ async function onStart(): Promise<void> {
           .join('/');
         const [mlpLabel, mlpConf] = predict(smoothed[0]);
         const st = state.debugInfo;
+        const curlMean = ['index', 'middle', 'ring', 'pinky']
+          .map((k) => f.curl[k] ?? 180)
+          .reduce((a, b) => a + b, 0) / 4;
         featInfo =
           `open=${f.openness.toFixed(2)} spread=${f.spreadMean.toFixed(2)} ` +
           `palm=${f.palmToCamera.toFixed(2)} ext=${ext} ` +
+          `curl=${curlMean.toFixed(0)} thumbOut=${f.thumbOut.toFixed(2)} ` +
           `horiz=${f.pointingHorizontal.toFixed(2)} up=${f.pointingUp.toFixed(2)} ` +
           `mlp=${mlpLabel}:${mlpConf.toFixed(2)} streak=${st.candidate ?? '-'}/${st.streak}`;
         if (smoothed[1]) {
