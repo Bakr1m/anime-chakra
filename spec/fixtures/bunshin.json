@@ -136,6 +136,7 @@
         },
         "openness": 0.663354,
         "spreadMean": 0.6092,
+        "thumbOut": 0.631437,
         "palmToCamera": 1.0,
         "pointing": [
           0.229025,
@@ -277,6 +278,7 @@
         },
         "openness": 0.663354,
         "spreadMean": 0.6092,
+        "thumbOut": 0.631437,
         "palmToCamera": 1.0,
         "pointing": [
           -0.450259,
