@@ -28,7 +28,8 @@ def _rules_for(spec: dict[str, Any], jutsu_id: str) -> dict[str, Any]:
 def match_rasengan(feat: HandFeatures, rules: dict[str, Any]) -> bool:
     return (
         float(rules["opennessMin"]) <= feat.openness <= float(rules["opennessMax"])
-        and feat.spread_mean <= float(rules["spreadMax"])
+        and float(rules["spreadMin"]) <= feat.spread_mean <= float(rules["spreadMax"])
+        and feat.extension["thumb"] >= float(rules["thumbMin"])
         and feat.palm_to_camera >= float(rules["palmToCameraMin"])
     )
 

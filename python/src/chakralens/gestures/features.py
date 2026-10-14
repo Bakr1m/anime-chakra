@@ -75,6 +75,7 @@ class HandFeatures:
     curl: dict[str, float] = field(default_factory=dict)
     openness: float = 0.0
     spread_mean: float = 0.0
+    thumb_out: float = 0.0
     palm_to_camera: float = 0.0
     pointing: Point = (0.0, 0.0, 0.0)
     pointing_up: float = 0.0
@@ -88,6 +89,7 @@ class HandFeatures:
             "curl": dict(self.curl),
             "openness": self.openness,
             "spreadMean": self.spread_mean,
+            "thumbOut": self.thumb_out,
             "palmToCamera": self.palm_to_camera,
             "pointing": list(self.pointing),
             "pointingUp": self.pointing_up,
@@ -123,6 +125,8 @@ def extract_hand(landmarks: Sequence[Landmark]) -> HandFeatures:
     openness = float(
         sum(extension[f] for f in ("index", "middle", "ring", "pinky")) / 4.0
     )
+    thumb_tip = pts[4]
+    thumb_out = dist3(thumb_tip, palm_center) / hand_size
     spreads = [
         dist2(pts[8], pts[12]) / hand_size,
         dist2(pts[12], pts[16]) / hand_size,
@@ -152,6 +156,7 @@ def extract_hand(landmarks: Sequence[Landmark]) -> HandFeatures:
         curl=curl,
         openness=openness,
         spread_mean=spread_mean,
+        thumb_out=thumb_out,
         palm_to_camera=palm_to_camera,
         pointing=pointing,
         pointing_up=pointing_up,

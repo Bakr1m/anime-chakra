@@ -100,9 +100,11 @@ def make_hand(
 def preset(name: str, seed: int = 0, **kw: object) -> list[dict[str, float]]:
     """Named prototypes matching the four core signs (plus negatives)."""
     if name == "rasengan":
+        # recalibrated 2026-10-12 on real hands: relaxed cup reads
+        # openness ~0.9 (not 0.45); the old curls folded past the palm
         return make_hand(
-            curl={"thumb": 0.55, "index": 0.5, "middle": 0.55, "ring": 0.55, "pinky": 0.6},
-            spread=0.55,
+            curl={"thumb": 0.33, "index": 0.28, "middle": 0.3, "ring": 0.3, "pinky": 0.35},
+            spread=1.0,
             seed=seed,
             **kw,  # type: ignore[arg-type]
         )
