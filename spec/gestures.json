@@ -48,7 +48,7 @@
       },
       "rules": {
         "fourFingersExtendedMin": 0.8,
-        "thumbTuckedMax": 0.45,
+        "thumbTuckedMax": 0.75,
         "fingerSpreadMax": 0.35,
         "pointingHorizontalMin": 0.5
       }
