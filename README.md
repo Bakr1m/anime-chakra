@@ -36,7 +36,8 @@ docker run -p 8080:8080 bakr1m/anime-chakra
 
 Images: [anime-chakra](https://hub.docker.com/r/bakr1m/anime-chakra) and
 [anime-chakra-lab](https://hub.docker.com/r/bakr1m/anime-chakra-lab) on Docker
-Hub (`:latest`, `:1.0`, `:1.0.0`, amd64+arm64; mirrored on GHCR). Releases:
+Hub (`:latest` from main, `:main`, `:sha-<commit>` per green push, `:1.0` /
+`:1.0.0` releases, amd64+arm64; mirrored on GHCR — PR builds never publish). Releases:
 [Chakra Lens 1.0.0](https://github.com/Bakr1m/anime-chakra/releases/tag/v1.0.0).
 
 Desktop CLI with your webcam:
