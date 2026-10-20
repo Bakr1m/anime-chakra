@@ -8,7 +8,7 @@
     "version": { "type": "integer", "const": 1 },
     "label": {
       "type": "string",
-      "enum": ["rasengan", "chidori", "katon", "bunshin", "sharingan", "kurama", "none", "other"]
+      "enum": ["rasengan", "chidori", "katon", "bunshin", "kurama", "none", "other"]
     },
     "source": { "type": "string", "description": "e.g. web-recorder, desktop-record, video-extract, synthetic" },
     "capturedAt": { "type": "string", "format": "date-time" },

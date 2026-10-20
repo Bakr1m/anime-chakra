@@ -18,7 +18,6 @@ const FIXTURES: Record<string, FixtureDoc> = {
   chidori: chidoriFx as FixtureDoc,
   katon: katonFx as FixtureDoc,
   bunshin: bunshinFx as FixtureDoc,
-  sharingan: bunshinFx as FixtureDoc,
   kurama: fistFx as FixtureDoc,
 };
 
@@ -55,18 +54,6 @@ export function demoHands(id: string, time: number): Landmark[][] {
       z: ((p.z - 0) / 300) * scale,
     })),
   );
-  if (id === 'sharingan' && mapped[0]?.[8]) {
-    // point the index finger at the demo eye anchor
-    const tip = mapped[0][8];
-    const dx = 0.5 - tip.x;
-    const dy = 0.3 - tip.y;
-    for (const hand of mapped) {
-      for (const p of hand) {
-        p.x += dx;
-        p.y += dy;
-      }
-    }
-  }
   if (id === 'kurama' && mapped[0]) {
     // two raised fists: duplicate the fist, offset sideways, lift up
     const second = mapped[0].map((p) => ({ ...p, x: p.x + 0.22, y: p.y - 0.04 }));
@@ -74,11 +61,6 @@ export function demoHands(id: string, time: number): Landmark[][] {
     return [first, second];
   }
   return mapped;
-}
-
-/** demo eye anchor for sharingan (normalized-ish screen spot) */
-export function demoEyeSpot(): { x: number; y: number; size: number } {
-  return { x: 320, y: 108, size: 44 };
 }
 
 /** demo person-mask: capsule matching the background figure (for kurama) */

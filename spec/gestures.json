@@ -99,26 +99,6 @@
       }
     },
     {
-      "id": "sharingan",
-      "displayName": "Sharingan",
-      "character": "Sasuke Uchiha / Kakashi Hatake",
-      "hands": 1,
-      "needsSegmentation": false,
-      "needsFace": true,
-      "kind": "sustain",
-      "stretch": true,
-      "webOnly": true,
-      "cooldownSeconds": 1.0,
-      "colors": {
-        "core": "#D50000",
-        "mid": "#8B0000",
-        "edge": "#000000"
-      },
-      "rules": {
-        "indexTipNearEyeMax": 1.2
-      }
-    },
-    {
       "id": "kurama",
       "displayName": "Kurama Cloak",
       "character": "Naruto Uzumaki",

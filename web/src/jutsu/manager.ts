@@ -13,7 +13,6 @@ import { Rasengan } from './rasengan/rasengan';
 import { Chidori } from './chidori/chidori';
 import { KageBunshin } from './bunshin/bunshin';
 import { Katon } from './katon/katon';
-import { Sharingan } from './sharingan/sharingan';
 import { KuramaCloak } from './kurama/kurama';
 import { JutsuState } from '../gestures/stateMachine';
 import { getSpec } from '../gestures/spec';
@@ -30,7 +29,6 @@ export interface FrameInput {
   demoMouth?: { x: number; y: number; headPx: number } | null;
   /** demo/forced jutsu bypasses the classifier (stretch modes) */
   forceId?: string | null;
-  demoEye?: { x: number; y: number; size: number } | null;
   demoMask?: THREE.Texture | null;
 }
 
@@ -70,14 +68,12 @@ export class JutsuManager implements JutsuContext {
     const chidori = new Chidori();
     const bunshin = new KageBunshin();
     const katon = new Katon();
-    const sharingan = new Sharingan();
     const kurama = new KuramaCloak();
-    this.jutsu = { rasengan, chidori, bunshin, katon, sharingan, kurama };
+    this.jutsu = { rasengan, chidori, bunshin, katon, kurama };
     this.spec = getSpec();
   }
 
   private spec: ReturnType<typeof getSpec>;
-  private sharinganStreak = new JutsuState();
   private kuramaStreak = new JutsuState();
 
   setDemoSeed(id: string): void {
@@ -113,8 +109,8 @@ export class JutsuManager implements JutsuContext {
   private segAttemptAt = -10;
 
   /** Start face/seg as soon as hands are visible — never gated on the
-   *  active jutsu. Gating startup on the active jutsu deadlocked Sharingan
-   *  permanently (it needs eyes to BECOME active). Attempts throttled to 5 s;
+   *  active jutsu (gating on it delays Katon's mouth anchor and Kurama's
+   *  cloak mask until after activation). Attempts throttled to 5 s;
    *  both pipelines self-throttle their per-frame work. Demo passes no video
    *  and is unaffected. */
   private primePipelines(f: FrameInput): void {
@@ -132,29 +128,8 @@ export class JutsuManager implements JutsuContext {
     if (this.seg.ready) this.seg.update(f.video, performance.now());
   }
 
-  /** Stretch-mode fusion: sharingan/kurama override the hand classifier. */
+  /** Stretch-mode fusion: kurama overrides the hand classifier. */
   private stretchId(f: FrameInput): string | null {
-    // sharingan: index tip within 1.2 eye-widths of an eye
-    if (f.hands.length >= 1 && f.hands[0]) {
-      const tip = f.hands[0][8];
-      const eyes =
-        this.face.eyes.length > 0
-          ? this.face.eyes
-          : f.demoEye
-            ? [{ cx: 0.5, cy: 0.3, width: 0.06, ix: 0.5, iy: 0.3 }]
-            : [];
-      if (tip && eyes.length > 0) {
-        let near = false;
-        for (const e of eyes) {
-          if (Math.hypot(tip.x - this.fx(e.ix), tip.y - e.iy) < 1.2 * Math.max(e.width, 1e-3)) {
-            near = true;
-            break;
-          }
-        }
-        const [id] = this.sharinganStreak.update(near ? 'sharingan' : 'none', near ? 1 : 0, f.time, f.dt, this.spec);
-        if (id === 'sharingan') return 'sharingan';
-      }
-    }
     // kurama: both fists clenched and raised (wrists above frame middle)
     if (f.hands.length === 2 && f.hands[0] && f.hands[1]) {
       const fist = (h: Landmark[]): boolean =>
@@ -223,30 +198,6 @@ export class JutsuManager implements JutsuContext {
       }
     }
 
-    if (this.current.id === 'sharingan') {
-      const s = this.jutsu['sharingan'];
-      if (s instanceof Sharingan) {
-        if (f.demoEye) {
-          s.iris = f.demoEye;
-        } else if (this.face.eyes.length > 0 && hand[8]) {
-          const W = this.renderer.width;
-          const H = this.renderer.height;
-          const tip = hand[8];
-          let best = this.face.eyes[0];
-          let bestD = Infinity;
-          for (const e of this.face.eyes) {
-            const d = tip ? Math.hypot(tip.x - this.fx(e.ix), tip.y - e.iy) : Infinity;
-            if (d < bestD) {
-              bestD = d;
-              best = e;
-            }
-          }
-          if (best) {
-            s.iris = { x: this.fx(best.ix) * W, y: best.iy * H, size: best.width * W * 1.7 };
-          }
-        }
-      }
-    }
     if (this.current.id === 'kurama') {
       const k = this.jutsu['kurama'];
       if (k instanceof KuramaCloak) {

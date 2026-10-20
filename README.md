@@ -58,11 +58,10 @@ make phone-lan    # https://<lan-ip>:8443 via Caddy (one-time cert warning)
 
 | Jutsu | Character | Sign | Shot |
 |---|---|---|---|
-| Rasengan | Naruto | Palm to camera, fingers cupped (openness 0.4-0.75) | ![Rasengan](docs/img/demo-rasengan.png) |
+| Rasengan | Naruto | Palm to camera, fingers cupped (openness 0.55-0.96, spread 0.18-0.5, thumb out) | ![Rasengan](docs/img/demo-rasengan.png) |
 | Chidori | Sasuke / Kakashi | Knife hand, four fingers together, sideways | ![Chidori](docs/img/demo-chidori.png) |
 | Katon: Gokakyu | Sasuke / Itachi | Tiger seal, two hands touching, hold 0.5 s | ![Katon](docs/img/demo-katon.png) |
 | Kage Bunshin | Naruto | Cross seal, finger lines in an X | ![Bunshin](docs/img/demo-bunshin.png) |
-| Sharingan (stretch) | Sasuke | Point your index at your eye | web only |
 | Kurama Cloak (stretch) | Naruto | Both fists raised high | web only |
 
 ## How it works

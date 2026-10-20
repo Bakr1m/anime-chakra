@@ -1,4 +1,4 @@
-// FaceLandmarker wrapper: mouth anchor for Katon, eye/iris for Sharingan.
+// FaceLandmarker wrapper: mouth anchor for Katon.
 // Runs every 3rd frame only when a jutsu needs it. Optional like segmentation.
 import { modelUrl } from '../paths';
 export interface FaceAnchor {

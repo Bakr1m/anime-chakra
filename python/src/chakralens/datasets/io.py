@@ -13,7 +13,6 @@ VALID_LABELS = {
     "chidori",
     "katon",
     "bunshin",
-    "sharingan",
     "kurama",
     "none",
     "other",
@@ -62,7 +61,7 @@ def sample_to_training(doc: dict[str, Any]) -> tuple[list[float], str] | None:
         label = "tiger"
     elif label in ("bunshin",):
         label = "cross"
-    elif label in ("none", "sharingan", "kurama"):
+    elif label in ("none", "kurama"):
         return None
     if label not in TRAIN_LABELS:
         return None

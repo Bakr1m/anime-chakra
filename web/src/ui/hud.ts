@@ -11,7 +11,6 @@ export const CARDS: CardDef[] = [
   { id: 'chidori', name: 'Chidori', character: 'Sasuke', hint: 'Knife hand, flat, sideways' },
   { id: 'katon', name: 'Katon: Gokakyu', character: 'Sasuke / Itachi', hint: 'Tiger seal, two hands, hold' },
   { id: 'bunshin', name: 'Kage Bunshin', character: 'Naruto', hint: 'Cross seal, fingers in an X' },
-  { id: 'sharingan', name: 'Sharingan', character: 'Sasuke', hint: 'Point at your eye' },
   { id: 'kurama', name: 'Kurama Cloak', character: 'Naruto', hint: 'Both fists raised high' },
 ];
 

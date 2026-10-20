@@ -1,6 +1,6 @@
 import { Camera } from './camera/camera';
 import { SynthAudio } from './audio/voices';
-import { demoBackground, demoEyeSpot, demoHands, demoMask } from './demo/driver';
+import { demoBackground, demoHands, demoMask } from './demo/driver';
 import { LandmarkSmoother } from './filters/oneEuro';
 import { classifyEnsemble } from './gestures/ensemble';
 import { extractHand, twoHandFeatures } from './gestures/features';
@@ -147,7 +147,7 @@ async function runDemo(id: string): Promise<void> {
   const bg = demoBackground();
   renderer.attachTexture(bg.texture, bg.w, bg.h);
   const mask = id === 'kurama' ? demoMask() : null;
-  const forceId = id === 'sharingan' || id === 'kurama' ? id : null;
+  const forceId = id === 'kurama' ? id : null;
 
   const audio = new SynthAudio();
   const quality = new QualityManager();
@@ -194,7 +194,6 @@ async function runDemo(id: string): Promise<void> {
       activeId: active,
       demoMouth,
       forceId,
-      demoEye: id === 'sharingan' ? demoEyeSpot() : null,
       demoMask: mask ? mask.texture : null,
     });
     const w = window as unknown as Record<string, unknown>;
