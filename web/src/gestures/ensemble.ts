@@ -1,6 +1,8 @@
-// Rules + MLP ensemble. Agreement -> label; disagreement needs
-// disagreeMinConfidence (0.9), else none. Single-hand decision space is
-// {rasengan, chidori, none}; tiger/cross/open/fist/other all vote none.
+// Rules + MLP ensemble. The calibrated rules win outright — the MLP is a
+// synthetic-only baseline and must not veto a rule match (a confident
+// `fist`/`other` vote used to silently discard real hand signs). The MLP
+// still boosts agreement and can activate a singleton sign on its own when
+// the rules are silent.
 import type { Landmark } from './features';
 import { predict } from './mlp';
 import { classify } from './rules';
@@ -27,8 +29,8 @@ export function ensembleSingle(
   if (rulesLabel === mlpVote) {
     return [rulesLabel, Math.max(rulesConf, mlpConf)];
   }
+  if (rulesLabel !== 'none') return [rulesLabel, rulesConf];
   const gate = spec.reliability.disagreeMinConfidence;
-  if (rulesLabel !== 'none' && rulesConf >= gate && mlpConf < gate) return [rulesLabel, rulesConf];
   if (mlpVote !== 'none' && mlpConf >= gate && rulesConf < gate) return [mlpVote, mlpConf];
   return ['none', 0];
 }
@@ -45,6 +47,22 @@ export function ensembleTwoHand(
   return [rulesLabel, consistent ? 1.0 : 0.8];
 }
 
+/** With two hands, the MLP vote for a one-hand sign must come from the hand
+ *  the rules actually matched (MediaPipe's order is arbitrary); when the
+ *  rules are silent, prefer the most confident singleton vote. */
+function pickPart(rulesLabel: string, parts: [[string, number], [string, number]]): [string, number] {
+  if (rulesLabel !== 'none') {
+    const agreed = parts.find((p) => SINGLETON[p[0]] === rulesLabel);
+    if (agreed) return agreed;
+  } else {
+    const singletons = parts.filter((p) => (SINGLETON[p[0]] ?? 'none') !== 'none');
+    if (singletons.length > 0) {
+      return singletons.reduce((a, b) => (b[1] > a[1] ? b : a));
+    }
+  }
+  return parts[0];
+}
+
 /** Full pipeline decision for 1-2 hands. Pure rules when model is null. */
 export function classifyEnsemble(hands: Landmark[][], spec?: GestureSpec): [string, number] {
   const s = spec ?? getSpec();
@@ -54,8 +72,8 @@ export function classifyEnsemble(hands: Landmark[][], spec?: GestureSpec): [stri
     if (rulesLabel === 'katon' || rulesLabel === 'bunshin') {
       return ensembleTwoHand(rulesLabel, [parts[0][0], parts[1][0]], rulesConf);
     }
-    const [label, conf] = ensembleSingle(rulesLabel, rulesConf, parts[0][0], parts[0][1], s);
-    return [label, conf];
+    const [mlpLabel, mlpConf] = pickPart(rulesLabel, parts);
+    return ensembleSingle(rulesLabel, rulesConf, mlpLabel, mlpConf, s);
   }
   if (hands.length >= 1 && hands[0]) {
     const [mlpLabel, mlpConf] = predict(hands[0]);

@@ -5,6 +5,7 @@ import { LandmarkSmoother } from './filters/oneEuro';
 import { classifyEnsemble } from './gestures/ensemble';
 import { extractHand, twoHandFeatures } from './gestures/features';
 import { predict } from './gestures/mlp';
+import { gateReport } from './gestures/rules';
 import { getSpec } from './gestures/spec';
 import { JutsuState } from './gestures/stateMachine';
 import { JutsuManager } from './jutsu/manager';
@@ -197,14 +198,14 @@ async function runDemo(id: string): Promise<void> {
       demoMask: mask ? mask.texture : null,
     });
     const w = window as unknown as Record<string, unknown>;
-    w['__chakraLabel'] = active ?? label;
+    w['__chakraLabel'] = manager.currentId ?? label;
     const hist = (w['__chakraHist'] as string[] | undefined) ?? [];
     hist.push(label);
     if (hist.length > 40) hist.shift();
     w['__chakraHist'] = hist;
     particles.update(dt);
     renderer.render(dt);
-    overlay.draw(hands, active ?? label, charge, 60);
+    overlay.draw(hands, manager.currentId ?? label, manager.charge, 60);
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
@@ -429,9 +430,9 @@ async function onStart(): Promise<void> {
     );
     particles.update(dt);
     renderer.render(dt);
-    if (labelEl && tracker.ready) labelEl.textContent = active ?? label;
-    cards.update(active, charge);
-    if (cleanName) cleanName.textContent = active ?? '';
+    if (labelEl && tracker.ready) labelEl.textContent = manager.currentId ?? label;
+    cards.update(manager.currentId, manager.charge);
+    if (cleanName) cleanName.textContent = manager.currentId ?? '';
     // rule-input telemetry: pasting this line while holding a sign shows
     // exactly which threshold fails (openness/spread/palm/extensions).
     let featInfo = '';
@@ -469,10 +470,11 @@ async function onStart(): Promise<void> {
     }
     overlay.draw(
       smoothed,
-      active ?? label,
-      charge,
+      manager.currentId ?? label,
+      manager.charge,
       quality.fps,
       `hands:${hands.length} empty:${emptyStreak} delegate:${tracker.delegate ?? 'none'} ${featInfo}`,
+      overlay.enabled ? gateReport(smoothed, spec) : '',
     );
     requestAnimationFrame(loop);
   };

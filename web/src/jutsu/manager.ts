@@ -15,7 +15,8 @@ import { KageBunshin } from './bunshin/bunshin';
 import { Katon } from './katon/katon';
 import { KuramaCloak } from './kurama/kurama';
 import { JutsuState } from '../gestures/stateMachine';
-import { getSpec } from '../gestures/spec';
+import { matchKurama } from '../gestures/rules';
+import { getSpec, rulesFor } from '../gestures/spec';
 import type { EffectAnchor, Jutsu, JutsuContext } from './types';
 
 export interface FrameInput {
@@ -71,10 +72,23 @@ export class JutsuManager implements JutsuContext {
     const kurama = new KuramaCloak();
     this.jutsu = { rasengan, chidori, bunshin, katon, kurama };
     this.spec = getSpec();
+    this.katonHold = this.spec.jutsu.find((j) => j.id === 'katon')?.holdSeconds ?? 0.5;
   }
 
   private spec: ReturnType<typeof getSpec>;
   private kuramaStreak = new JutsuState();
+  private katonHold = 0.5;
+  private displayCharge = 0;
+
+  /** HUD view of the jutsu actually rendering: stretch gestures (kurama)
+   *  never reach the state machine, so they report their own charge ramp. */
+  get currentId(): string | null {
+    return this.current?.id ?? null;
+  }
+
+  get charge(): number {
+    return this.displayCharge;
+  }
 
   setDemoSeed(id: string): void {
     this.rng = mulberry32(hashSeed(id));
@@ -128,30 +142,19 @@ export class JutsuManager implements JutsuContext {
     if (this.seg.ready) this.seg.update(f.video, performance.now());
   }
 
-  /** Stretch-mode fusion: kurama overrides the hand classifier. */
+  /** Stretch-mode fusion: kurama overrides the hand classifier. The streak
+   *  is ALWAYS updated (even with <2 hands) so losing the pose releases with
+   *  the normal hysteresis instead of freezing or flickering off instantly. */
   private stretchId(f: FrameInput): string | null {
-    // kurama: both fists clenched and raised (wrists above frame middle)
-    if (f.hands.length === 2 && f.hands[0] && f.hands[1]) {
-      const fist = (h: Landmark[]): boolean =>
-        ['index', 'middle', 'ring', 'pinky'].every((k) => {
-          const mcp = { index: 5, middle: 9, ring: 13, pinky: 17 }[k] ?? 5;
-          const tip = { index: 8, middle: 12, ring: 16, pinky: 20 }[k] ?? 8;
-          const a = h[mcp];
-          const b = h[tip];
-          const w = h[0];
-          const m = h[9];
-          if (!a || !b || !w || !m) return false;
-          const size = Math.hypot(m.x - w.x, m.y - w.y) || 1e-6;
-          return Math.hypot(b.x - a.x, b.y - a.y) / size < 0.45;
-        });
-      const h0 = f.hands[0];
-      const h1 = f.hands[1];
-      const raised = (h0[0]?.y ?? 1) < 0.5 && (h1[0]?.y ?? 1) < 0.5;
-      const both = fist(h0) && fist(h1) && raised;
-      const [id] = this.kuramaStreak.update(both ? 'kurama' : 'none', both ? 1 : 0, f.time, f.dt, this.spec);
-      if (id === 'kurama') return 'kurama';
-    }
-    return null;
+    const both = matchKurama(f.hands, rulesFor(this.spec, 'kurama'));
+    const [id] = this.kuramaStreak.update(
+      both ? 'kurama' : 'none',
+      both ? 1 : 0,
+      f.time,
+      f.dt,
+      this.spec,
+    );
+    return id === 'kurama' ? 'kurama' : null;
   }
 
   update(f: FrameInput): void {
@@ -168,6 +171,18 @@ export class JutsuManager implements JutsuContext {
       if (this.current && f.hands[0]) {
         this.current.onActivate(this, this.anchorFor(f.hands[0]));
       }
+    }
+    // charge: the state machine drives it while it tracks this jutsu; a
+    // stretch jutsu (invisible to the state machine) ramps on its own with
+    // the same ease-out tau so effects never render stuck at zero.
+    if (!this.current) {
+      this.displayCharge = 0;
+    } else if (f.activeId === this.current.id) {
+      this.displayCharge = f.charge;
+    } else {
+      const tau = this.spec.reliability.chargeSeconds / 3 || 0.2;
+      this.displayCharge += (1 - this.displayCharge) * Math.min(1, f.dt / tau);
+      this.displayCharge = Math.min(this.displayCharge, 1);
     }
     if (!this.current) return;
     const hand = f.hands[0];
@@ -190,10 +205,10 @@ export class JutsuManager implements JutsuContext {
           headPx: this.face.last.headSize * W,
         };
       }
-      // charged: hold the seal 0.5 s, then fire; refire while held so the
-      // effect sustains (and demo screenshots always catch a fireball)
+      // charged: hold the seal (spec holdSeconds), then fire; refire while held
+      // so the effect sustains (and demo screenshots always catch a fireball)
       this.holdTime += f.dt;
-      if (this.holdTime >= 0.5 && k.alive === 0) {
+      if (this.holdTime >= this.katonHold && k.alive === 0) {
         k.fire(this, anchor);
       }
     }
@@ -205,7 +220,7 @@ export class JutsuManager implements JutsuContext {
       }
     }
 
-    this.current.update(f.dt, f.time, this, f.charge, anchor);
+    this.current.update(f.dt, f.time, this, this.displayCharge, anchor);
     this.current.render(this);
   }
 }

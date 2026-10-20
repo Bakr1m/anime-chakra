@@ -6,8 +6,7 @@
     "releaseFrames": 8,
     "minConfidence": 0.75,
     "disagreeMinConfidence": 0.9,
-    "chargeSeconds": 0.6,
-    "twoHandPriority": true
+    "chargeSeconds": 0.6
   },
   "jutsu": [
     {
@@ -93,7 +92,6 @@
       },
       "rules": {
         "bothHandsIndexMiddleExtendedMin": 0.7,
-        "fingerLinesCross": true,
         "crossAngleMinDeg": 20.0,
         "crossAngleMaxDeg": 90.0
       }
@@ -115,8 +113,8 @@
         "edge": "#E65100"
       },
       "rules": {
-        "bothFistsClenched": true,
-        "handsAboveShoulders": true
+        "fistRatioMax": 0.45,
+        "wristYMax": 0.5
       }
     }
   ]

@@ -45,8 +45,12 @@ describe('ensemble', () => {
     expect(ensembleSingle('none', 0, 'open', 0.9, spec)).toEqual(['none', 0.9]);
   });
 
-  it('disagreement needs 0.9', () => {
-    expect(ensembleSingle('rasengan', 1, 'open', 0.5, spec)[0]).toBe('rasengan');
+  it('rules win over any MLP disagreement', () => {
+    // calibrated rules are never vetoed by the synthetic-only MLP
+    expect(ensembleSingle('rasengan', 1, 'open', 0.5, spec)).toEqual(['rasengan', 1]);
+    expect(ensembleSingle('rasengan', 1, 'fist', 0.95, spec)).toEqual(['rasengan', 1]);
+    expect(ensembleSingle('chidori', 1, 'other', 0.99, spec)).toEqual(['chidori', 1]);
+    // silent rules still need a confident singleton to activate alone
     expect(ensembleSingle('none', 0, 'rasengan', 0.95, spec)).toEqual(['rasengan', 0.95]);
     expect(ensembleSingle('none', 0, 'rasengan', 0.8, spec)).toEqual(['none', 0]);
   });

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { angleAt, extractHand, segmentsIntersect, type Landmark } from '../src/gestures/features';
-import { classify } from '../src/gestures/rules';
+import { classify, gateReport } from '../src/gestures/rules';
 import { getSpec } from '../src/gestures/spec';
 
 const DIR = join(__dirname, '..', '..', 'spec', 'fixtures');
@@ -26,6 +26,21 @@ describe('rules', () => {
     expect(classify(load('open_palm'), getSpec())[0]).toBe('none');
     expect(classify(load('fist'), getSpec())[0]).toBe('none');
     expect(classify(load('tiger_single'), getSpec())[0]).toBe('none');
+  });
+
+  it('checks every hand for one-hand signs', () => {
+    // MediaPipe order is arbitrary: the signing hand may be at index 1
+    const signing = load('rasengan')[0] as Landmark[];
+    const other = load('fist')[0] as Landmark[];
+    expect(classify([other, signing], getSpec())[0]).toBe('rasengan');
+    expect(classify([signing, other], getSpec())[0]).toBe('rasengan');
+  });
+
+  it('gate report shows ok and the first failing gate', () => {
+    expect(gateReport(load('rasengan'), getSpec())).toContain('ras:ok');
+    expect(gateReport(load('chidori'), getSpec())).toContain('chid:ok');
+    expect(gateReport(load('fist'), getSpec())).toContain('chid:fo=0.34/0.80');
+    expect(gateReport([], getSpec())).toContain('ras:h1');
   });
 
   it('handles degenerate geometry', () => {

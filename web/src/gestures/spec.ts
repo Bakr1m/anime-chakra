@@ -28,7 +28,6 @@ export interface GestureSpec {
     minConfidence: number;
     disagreeMinConfidence: number;
     chargeSeconds: number;
-    twoHandPriority: boolean;
   };
   jutsu: JutsuDef[];
 }
