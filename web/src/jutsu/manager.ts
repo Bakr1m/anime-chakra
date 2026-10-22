@@ -94,14 +94,44 @@ export class JutsuManager implements JutsuContext {
     this.rng = mulberry32(hashSeed(id));
   }
 
-  private whiteTex: THREE.Texture | null = null;
+  private blobTex: THREE.DataTexture | null = null;
+  private blobBuf: Uint8ClampedArray<ArrayBuffer> | null = null;
+  private blobAt = -10;
 
-  private fallbackMask(): THREE.Texture {
-    if (!this.whiteTex) {
-      this.whiteTex = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
-      this.whiteTex.needsUpdate = true;
+  /** Fallback person mask when segmentation is unavailable: a soft radial
+   *  blob around the hand anchor (video-space UV) so kurama shows a cloak
+   *  aura and bunshin clones a body-shaped cutout instead of an invisible
+   *  1x1 white veil. Refreshed at ~8 Hz while the anchor moves. */
+  private fallbackMask(anchor: EffectAnchor): THREE.Texture {
+    const N = 64;
+    if (!this.blobTex) {
+      this.blobBuf = new Uint8ClampedArray(N * N * 4);
+      this.blobTex = new THREE.DataTexture(this.blobBuf, N, N);
     }
-    return this.whiteTex;
+    const nowS = performance.now() / 1000;
+    if (nowS - this.blobAt > 0.125) {
+      this.blobAt = nowS;
+      const tr = this.renderer.videoTransform;
+      const mx = (anchor.x / this.renderer.width - tr.offset[0]) / tr.repeat[0];
+      const my = (anchor.y / this.renderer.height - tr.offset[1]) / tr.repeat[1];
+      const rad = Math.max(anchor.size, 40) / this.renderer.width / tr.repeat[0];
+      const data = this.blobBuf as Uint8ClampedArray;
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          const dx = (x + 0.5) / N - mx;
+          const dy = (y + 0.5) / N - my;
+          const d = Math.min(1, Math.hypot(dx, dy) / rad);
+          const a = Math.round(255 * (1 - d) * (1 - d));
+          const i = (y * N + x) * 4;
+          data[i] = a;
+          data[i + 1] = a;
+          data[i + 2] = a;
+          data[i + 3] = 255;
+        }
+      }
+      this.blobTex.needsUpdate = true;
+    }
+    return this.blobTex;
   }
 
   private anchorFor(hand: Landmark[]): EffectAnchor {
@@ -201,7 +231,7 @@ export class JutsuManager implements JutsuContext {
     const anchor = this.anchorFor(hand);
 
     if (this.current.id === 'bunshin') {
-      (this.jutsu['bunshin'] as KageBunshin).setMask(this.seg.mask ?? this.fallbackMask());
+      (this.jutsu['bunshin'] as KageBunshin).setMask(this.seg.mask ?? this.fallbackMask(anchor));
     }
     if (this.current.id === 'katon') {
       const k = this.jutsu['katon'] as Katon;
@@ -227,7 +257,7 @@ export class JutsuManager implements JutsuContext {
     if (this.current.id === 'kurama') {
       const k = this.jutsu['kurama'];
       if (k instanceof KuramaCloak) {
-        k.mask = this.seg.mask ?? f.demoMask ?? this.fallbackMask();
+        k.mask = this.seg.mask ?? f.demoMask ?? this.fallbackMask(anchor);
       }
     }
 

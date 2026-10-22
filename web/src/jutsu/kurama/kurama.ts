@@ -11,21 +11,27 @@ const FRAG = /* glsl */ `
   uniform float uTime;
   uniform float uCharge;
   uniform float uMirror;
+  uniform vec2 uRepeat;
+  uniform vec2 uOffset;
   ${NOISE_GLSL}
   void main() {
     // animated displacement for licking flames
     vec2 wob = vec2(fbm3(vUv * 6.0 + vec2(0.0, -uTime * 1.4)) - 0.5);
-    vec2 uv = vUv + wob * 0.03;
-    uv.x = mix(uv.x, 1.0 - uv.x, uMirror);
-    float m = texture2D(uMask, uv).r;
+    vec2 s = vUv + wob * 0.03;
+    // mask is video space; the background quad is cover-fit (repeat/offset)
+    // and mirrored via negative x-scale — map screen -> raw video uv
+    vec2 muv;
+    muv.x = mix(s.x, 1.0 - s.x, uMirror) * uRepeat.x + uOffset.x;
+    muv.y = s.y * uRepeat.y + uOffset.y;
+    float m = texture2D(uMask, muv).r;
     // edge band: inside minus eroded inside (4-tap)
     float e = 0.012;
-    float m2 = texture2D(uMask, uv + vec2(e, 0.0)).r
-      * texture2D(uMask, uv - vec2(e, 0.0)).r
-      * texture2D(uMask, uv + vec2(0.0, e)).r
-      * texture2D(uMask, uv - vec2(0.0, e)).r;
+    float m2 = texture2D(uMask, muv + vec2(e, 0.0)).r
+      * texture2D(uMask, muv - vec2(e, 0.0)).r
+      * texture2D(uMask, muv + vec2(0.0, e)).r
+      * texture2D(uMask, muv - vec2(0.0, e)).r;
     float edge = clamp(m - m2, 0.0, 1.0) + m * 0.12;
-    float flames = fbm(uv * 9.0 + vec2(0.0, -uTime * 2.2));
+    float flames = fbm(muv * 9.0 + vec2(0.0, -uTime * 2.2));
     float body = edge * (0.55 + 0.45 * flames);
     vec3 deep = vec3(0.9, 0.32, 0.0);    // #E65100-ish
     vec3 mid = vec3(1.0, 0.56, 0.0);     // #FF8F00
@@ -64,6 +70,8 @@ export class KuramaCloak implements Jutsu {
         uTime: { value: 0 },
         uCharge: { value: 0 },
         uMirror: { value: 0 },
+        uRepeat: { value: new THREE.Vector2(1, 1) },
+        uOffset: { value: new THREE.Vector2(0, 0) },
       },
       transparent: true,
       depthWrite: false,
@@ -100,6 +108,9 @@ export class KuramaCloak implements Jutsu {
     this.mat.uniforms['uTime']!.value = time;
     this.mat.uniforms['uCharge']!.value = charge;
     this.mat.uniforms['uMirror']!.value = ctx.mirrored ? 1 : 0;
+    const tr = ctx.renderer.videoTransform;
+    (this.mat.uniforms['uRepeat']!.value as THREE.Vector2).set(tr.repeat[0], tr.repeat[1]);
+    (this.mat.uniforms['uOffset']!.value as THREE.Vector2).set(tr.offset[0], tr.offset[1]);
     // rising embers along the silhouette
     const n = Math.ceil(3 * ctx.quality.particleScale);
     for (let i = 0; i < n; i++) {
