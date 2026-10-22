@@ -5,7 +5,6 @@
     "activateFrames": 6,
     "releaseFrames": 8,
     "minConfidence": 0.75,
-    "disagreeMinConfidence": 0.9,
     "chargeSeconds": 0.6
   },
   "jutsu": [
@@ -24,7 +23,7 @@
         "edge": "#1565C0"
       },
       "rules": {
-        "opennessMin": 0.55,
+        "opennessMin": 0.85,
         "opennessMax": 0.96,
         "spreadMin": 0.18,
         "spreadMax": 0.5,

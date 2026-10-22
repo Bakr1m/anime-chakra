@@ -1,8 +1,9 @@
-// Rules + MLP ensemble. The calibrated rules win outright — the MLP is a
-// synthetic-only baseline and must not veto a rule match (a confident
-// `fist`/`other` vote used to silently discard real hand signs). The MLP
-// still boosts agreement and can activate a singleton sign on its own when
-// the rules are silent.
+// Rules + MLP ensemble. The calibrated rules are the only activation
+// authority: the MLP is a synthetic-only baseline and must neither veto a
+// rule match (a confident `fist`/`other` vote used to silently discard real
+// hand signs) nor activate one alone (uncalibrated confidence fired jutsu
+// on arbitrary real poses). The MLP still boosts agreement and confirms
+// two-hand seals.
 import type { Landmark } from './features';
 import { predict } from './mlp';
 import { classify } from './rules';
@@ -23,15 +24,12 @@ export function ensembleSingle(
   rulesConf: number,
   mlpLabel: string,
   mlpConf: number,
-  spec: GestureSpec,
 ): [string, number] {
   const mlpVote = SINGLETON[mlpLabel] ?? 'none';
   if (rulesLabel === mlpVote) {
     return [rulesLabel, Math.max(rulesConf, mlpConf)];
   }
   if (rulesLabel !== 'none') return [rulesLabel, rulesConf];
-  const gate = spec.reliability.disagreeMinConfidence;
-  if (mlpVote !== 'none' && mlpConf >= gate && rulesConf < gate) return [mlpVote, mlpConf];
   return ['none', 0];
 }
 
@@ -73,11 +71,11 @@ export function classifyEnsemble(hands: Landmark[][], spec?: GestureSpec): [stri
       return ensembleTwoHand(rulesLabel, [parts[0][0], parts[1][0]], rulesConf);
     }
     const [mlpLabel, mlpConf] = pickPart(rulesLabel, parts);
-    return ensembleSingle(rulesLabel, rulesConf, mlpLabel, mlpConf, s);
+    return ensembleSingle(rulesLabel, rulesConf, mlpLabel, mlpConf);
   }
   if (hands.length >= 1 && hands[0]) {
     const [mlpLabel, mlpConf] = predict(hands[0]);
-    return ensembleSingle(rulesLabel, rulesConf, mlpLabel, mlpConf, s);
+    return ensembleSingle(rulesLabel, rulesConf, mlpLabel, mlpConf);
   }
   return ['none', 0];
 }

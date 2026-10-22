@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ensembleSingle, ensembleTwoHand } from '../src/gestures/ensemble';
 import { forward, loadClassifier, normalizeHand, predict } from '../src/gestures/mlp';
-import { getSpec } from '../src/gestures/spec';
 
 const DIR = join(__dirname, '..', '..', 'spec', 'fixtures');
 
@@ -38,21 +37,19 @@ describe('mlp forward parity', () => {
 });
 
 describe('ensemble', () => {
-  const spec = getSpec();
-
-  it('agreement wins', () => {
-    expect(ensembleSingle('rasengan', 1, 'rasengan', 0.9, spec)).toEqual(['rasengan', 1]);
-    expect(ensembleSingle('none', 0, 'open', 0.9, spec)).toEqual(['none', 0.9]);
+  it('rules and MLP agree', () => {
+    expect(ensembleSingle('rasengan', 1, 'rasengan', 0.9)).toEqual(['rasengan', 1]);
+    expect(ensembleSingle('none', 0, 'open', 0.9)).toEqual(['none', 0.9]);
   });
 
-  it('rules win over any MLP disagreement', () => {
+  it('rules are the only activation authority', () => {
     // calibrated rules are never vetoed by the synthetic-only MLP
-    expect(ensembleSingle('rasengan', 1, 'open', 0.5, spec)).toEqual(['rasengan', 1]);
-    expect(ensembleSingle('rasengan', 1, 'fist', 0.95, spec)).toEqual(['rasengan', 1]);
-    expect(ensembleSingle('chidori', 1, 'other', 0.99, spec)).toEqual(['chidori', 1]);
-    // silent rules still need a confident singleton to activate alone
-    expect(ensembleSingle('none', 0, 'rasengan', 0.95, spec)).toEqual(['rasengan', 0.95]);
-    expect(ensembleSingle('none', 0, 'rasengan', 0.8, spec)).toEqual(['none', 0]);
+    expect(ensembleSingle('rasengan', 1, 'open', 0.5)).toEqual(['rasengan', 1]);
+    expect(ensembleSingle('rasengan', 1, 'fist', 0.95)).toEqual(['rasengan', 1]);
+    expect(ensembleSingle('chidori', 1, 'other', 0.99)).toEqual(['chidori', 1]);
+    // and a confident synthetic MLP cannot activate a sign alone
+    expect(ensembleSingle('none', 0, 'rasengan', 0.95)).toEqual(['none', 0]);
+    expect(ensembleSingle('none', 0, 'chidori', 0.99)).toEqual(['none', 0]);
   });
 
   it('two-hand parts confirm', () => {

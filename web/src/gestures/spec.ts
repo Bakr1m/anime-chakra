@@ -26,7 +26,6 @@ export interface GestureSpec {
     activateFrames: number;
     releaseFrames: number;
     minConfidence: number;
-    disagreeMinConfidence: number;
     chargeSeconds: number;
   };
   jutsu: JutsuDef[];

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { angleAt, extractHand, segmentsIntersect, type Landmark } from '../src/gestures/features';
 import { classify, gateReport } from '../src/gestures/rules';
+import { classifyEnsemble } from '../src/gestures/ensemble';
 import { getSpec } from '../src/gestures/spec';
 
 const DIR = join(__dirname, '..', '..', 'spec', 'fixtures');
@@ -34,6 +35,16 @@ describe('rules', () => {
     const other = load('fist')[0] as Landmark[];
     expect(classify([other, signing], getSpec())[0]).toBe('rasengan');
     expect(classify([signing, other], getSpec())[0]).toBe('rasengan');
+  });
+
+  it('full ensemble fires fixtures and rejects negatives', () => {
+    expect(classifyEnsemble(load('rasengan'), getSpec())[0]).toBe('rasengan');
+    expect(classifyEnsemble(load('chidori'), getSpec())[0]).toBe('chidori');
+    expect(classifyEnsemble(load('katon'), getSpec())[0]).toBe('katon');
+    expect(classifyEnsemble(load('bunshin'), getSpec())[0]).toBe('bunshin');
+    expect(classifyEnsemble(load('fist'), getSpec())[0]).toBe('none');
+    expect(classifyEnsemble(load('tiger_single'), getSpec())[0]).toBe('none');
+    expect(classifyEnsemble(load('open_palm'), getSpec())[0]).toBe('none');
   });
 
   it('gate report shows ok and the first failing gate', () => {
