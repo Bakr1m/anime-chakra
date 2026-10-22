@@ -121,12 +121,17 @@ export class JutsuManager implements JutsuContext {
 
   private faceAttemptAt = -10;
   private segAttemptAt = -10;
+  private faceTick = 0;
+  private segTick = 0;
 
   /** Start face/seg as soon as hands are visible — never gated on the
    *  active jutsu (gating on it delays Katon's mouth anchor and Kurama's
    *  cloak mask until after activation). Attempts throttled to 5 s;
-   *  both pipelines self-throttle their per-frame work. Demo passes no video
-   *  and is unaffected. */
+   *  per-frame work is throttled here: face every 4th frame (~15 Hz),
+   *  seg every 3rd frame (~20 Hz) only while two hands are visible (its
+   *  mask is only consumed by 2-hand jutsu). Running both graphs every
+   *  frame alongside hands was a measurable source of camera lag. Demo
+   *  passes no video and is unaffected. */
   private primePipelines(f: FrameInput): void {
     if (!f.video || f.hands.length === 0) return;
     const nowS = performance.now() / 1000;
@@ -138,8 +143,14 @@ export class JutsuManager implements JutsuContext {
       this.segAttemptAt = nowS;
       void this.seg.init().catch(() => undefined);
     }
-    if (this.face.ready) this.face.update(f.video, performance.now());
-    if (this.seg.ready) this.seg.update(f.video, performance.now());
+    if (this.face.ready) {
+      this.faceTick++;
+      if (this.faceTick % 4 === 0) this.face.update(f.video, performance.now());
+    }
+    if (this.seg.ready && f.hands.length === 2) {
+      this.segTick++;
+      if (this.segTick % 3 === 0) this.seg.update(f.video, performance.now());
+    }
   }
 
   /** Stretch-mode fusion: kurama overrides the hand classifier. The streak

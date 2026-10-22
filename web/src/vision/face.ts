@@ -1,5 +1,5 @@
-// FaceLandmarker wrapper: mouth anchor for Katon.
-// Runs every 3rd frame only when a jutsu needs it. Optional like segmentation.
+// FaceLandmarker wrapper: mouth anchor for Katon. The manager runs it every
+// 4th frame. Optional like segmentation.
 import { modelUrl } from '../paths';
 export interface FaceAnchor {
   mouthX: number;
@@ -23,7 +23,6 @@ export class FaceTracker {
     detectForVideo(v: unknown, t: number): { faceLandmarks?: { x: number; y: number }[][] };
     close(): void;
   } | null = null;
-  private frame = 0;
   last: FaceAnchor | null = null;
   eyes: EyeAnchor[] = [];
   status: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
@@ -55,11 +54,9 @@ export class FaceTracker {
     }
   }
 
-  /** call per frame; internally detects every 3rd frame. Normalized coords. */
+  /** call at the caller's cadence — the manager runs it every 4th frame */
   update(video: HTMLVideoElement, nowMs: number): void {
     if (!this.landmarker) return;
-    this.frame++;
-    if (this.frame % 3 !== 0) return;
     const res = this.landmarker.detectForVideo(video, nowMs);
     const face = res.faceLandmarks?.[0];
     if (!face) return;

@@ -1,6 +1,7 @@
 // Selfie segmentation pipeline (ImageSegmenter, selfie_multiclass_256x256).
-// Runs every 2nd frame only when a jutsu needs it. Optional: null when the
-// model is missing (demo mode, offline first-load) and jutsus degrade.
+// The manager runs it every 3rd frame while two hands are visible. Optional:
+// null when the model is missing (demo mode, offline first-load) and jutsus
+// degrade.
 import * as THREE from 'three';
 import { modelUrl } from '../paths';
 
@@ -10,7 +11,7 @@ export class Segmentation {
     close(): void;
   } | null = null;
   private maskTex: THREE.DataTexture | null = null;
-  private frame = 0;
+  private buf: Uint8Array<ArrayBuffer> | null = null;
   maskWidth = 0;
   maskHeight = 0;
   status: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
@@ -46,11 +47,10 @@ export class Segmentation {
     }
   }
 
-  /** call per frame; internally segments every 2nd frame */
+  /** call at the caller's cadence — the manager runs it every 3rd frame,
+   *  only while two hands are visible (the mask feeds 2-hand jutsu only) */
   update(video: HTMLVideoElement, nowMs: number): void {
     if (!this.segmenter) return;
-    this.frame++;
-    if (this.frame % 2 !== 0) return;
     this.segmenter.segmentForVideo(video, nowMs, (res) => {
       const r = res as {
         categoryMask?: { width: number; height: number; getAsFloat32Array: () => Float32Array };
@@ -60,7 +60,8 @@ export class Segmentation {
       const w = mask.width;
       const h = mask.height;
       const src = mask.getAsFloat32Array();
-      const data = new Uint8Array(w * h * 4);
+      if (!this.buf || this.buf.length !== w * h * 4) this.buf = new Uint8Array(w * h * 4);
+      const data = this.buf;
       for (let i = 0; i < w * h; i++) {
         const person = (src[i] ?? 0) > 0.5 ? 255 : 0;
         data[i * 4] = person;
@@ -72,7 +73,6 @@ export class Segmentation {
         this.maskWidth = w;
         this.maskHeight = h;
       } else {
-        this.maskTex.image.data.set(data);
         this.maskTex.needsUpdate = true;
       }
     });
