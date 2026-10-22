@@ -162,3 +162,38 @@ html, body {
 .clean .jutsu-name {
   display: block;
 }
+
+.debug-block {
+  position: absolute;
+  left: 4px;
+  top: 52px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  max-width: calc(100% - 8px);
+}
+
+.debug-block-text {
+  margin: 0;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #0f0;
+  font: 11px/1.4 monospace;
+  user-select: text;
+  -webkit-user-select: text;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.debug-copy {
+  min-height: 36px;
+  padding: 4px 12px;
+  background: #111;
+  color: #0f0;
+  border: 1px solid #0f0;
+  border-radius: 6px;
+  font: 12px monospace;
+  cursor: pointer;
+}

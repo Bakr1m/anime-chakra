@@ -26,25 +26,33 @@ export class FaceTracker {
   private frame = 0;
   last: FaceAnchor | null = null;
   eyes: EyeAnchor[] = [];
+  status: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
 
   get ready(): boolean {
     return this.landmarker !== null;
   }
 
   async init(modelPath = modelUrl('face_landmarker.task')): Promise<void> {
-    const vision = await import('@mediapipe/tasks-vision');
-    const v = vision as unknown as {
-      FilesetResolver: { forVisionTasks: (w: string) => Promise<unknown> };
-      FaceLandmarker: { createFromOptions: (f: unknown, o: unknown) => Promise<never> };
-    };
-    const fileset = await v.FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
-    );
-    this.landmarker = (await v.FaceLandmarker.createFromOptions(fileset, {
-      baseOptions: { modelAssetPath: modelPath, delegate: 'GPU' },
-      runningMode: 'VIDEO',
-      numFaces: 1,
-    })) as unknown as typeof this.landmarker;
+    this.status = 'loading';
+    try {
+      const vision = await import('@mediapipe/tasks-vision');
+      const v = vision as unknown as {
+        FilesetResolver: { forVisionTasks: (w: string) => Promise<unknown> };
+        FaceLandmarker: { createFromOptions: (f: unknown, o: unknown) => Promise<never> };
+      };
+      const fileset = await v.FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
+      );
+      this.landmarker = (await v.FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: modelPath, delegate: 'GPU' },
+        runningMode: 'VIDEO',
+        numFaces: 1,
+      })) as unknown as typeof this.landmarker;
+      this.status = 'ready';
+    } catch (e) {
+      this.status = 'error';
+      throw e;
+    }
   }
 
   /** call per frame; internally detects every 3rd frame. Normalized coords. */

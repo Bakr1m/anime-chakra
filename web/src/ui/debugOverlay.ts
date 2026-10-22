@@ -4,6 +4,7 @@ import type { Landmark } from '../gestures/features';
 export class DebugOverlay {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
+  private pre: HTMLPreElement | null = null;
   enabled = new URLSearchParams(location.search).has('debug');
 
   constructor(parent: HTMLElement) {
@@ -13,11 +14,43 @@ export class DebugOverlay {
     const ctx = this.canvas.getContext('2d');
     if (!ctx) throw new Error('no 2d context');
     this.ctx = ctx;
+    if (this.enabled) {
+      // canvas fillText is not selectable; a DOM block makes the gate line
+      // copyable on desktop and mobile (long-press select / copy button).
+      const block = document.createElement('div');
+      block.className = 'debug-block';
+      const pre = document.createElement('pre');
+      pre.className = 'debug-block-text';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'debug-copy';
+      btn.textContent = 'Copy debug';
+      btn.addEventListener('click', () => {
+        const text = pre.textContent ?? '';
+        navigator.clipboard
+          ?.writeText(text)
+          .then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => {
+              btn.textContent = 'Copy debug';
+            }, 1500);
+          })
+          .catch(() => undefined);
+      });
+      block.append(pre, btn);
+      parent.appendChild(block);
+      this.pre = pre;
+    }
   }
 
   resize(w: number, h: number): void {
     this.canvas.width = w;
     this.canvas.height = h;
+  }
+
+  /** plain-text telemetry for the selectable DOM block */
+  setText(text: string): void {
+    if (this.pre) this.pre.textContent = text;
   }
 
   draw(

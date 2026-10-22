@@ -468,14 +468,15 @@ async function onStart(): Promise<void> {
         featInfo = 'feature-error';
       }
     }
-    overlay.draw(
-      smoothed,
-      manager.currentId ?? label,
-      manager.charge,
-      quality.fps,
-      `hands:${hands.length} empty:${emptyStreak} delegate:${tracker.delegate ?? 'none'} ${featInfo}`,
-      overlay.enabled ? gateReport(smoothed, spec) : '',
-    );
+    const line1 = `${manager.currentId ?? label} charge=${manager.charge.toFixed(2)} fps=${quality.fps.toFixed(0)}`;
+    const line2 = `hands:${hands.length} empty:${emptyStreak} delegate:${tracker.delegate ?? 'none'} ${featInfo}`;
+    const line3 = overlay.enabled ? gateReport(smoothed, spec) : '';
+    if (overlay.enabled) {
+      const pipes = `seg=${manager.seg.status} face=${manager.face.status} hands=${hands.length}`;
+      overlay.setText(`${line1}\n${line2}\n${line3}\n${pipes}`);
+      (window as unknown as { __chakraGates?: string }).__chakraGates = line3;
+    }
+    overlay.draw(smoothed, manager.currentId ?? label, manager.charge, quality.fps, line2, line3);
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

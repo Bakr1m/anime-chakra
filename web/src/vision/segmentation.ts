@@ -13,6 +13,7 @@ export class Segmentation {
   private frame = 0;
   maskWidth = 0;
   maskHeight = 0;
+  status: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
 
   get ready(): boolean {
     return this.segmenter !== null;
@@ -23,19 +24,26 @@ export class Segmentation {
   }
 
   async init(modelPath = modelUrl('selfie_segmenter.tflite')): Promise<void> {
-    const vision = await import('@mediapipe/tasks-vision');
-    const v = vision as unknown as {
-      FilesetResolver: { forVisionTasks: (w: string) => Promise<unknown> };
-      ImageSegmenter: { createFromOptions: (f: unknown, o: unknown) => Promise<never> };
-    };
-    const fileset = await v.FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
-    );
-    this.segmenter = (await v.ImageSegmenter.createFromOptions(fileset, {
-      baseOptions: { modelAssetPath: modelPath, delegate: 'GPU' },
-      runningMode: 'VIDEO',
-      outputCategoryMask: true,
-    })) as unknown as typeof this.segmenter;
+    this.status = 'loading';
+    try {
+      const vision = await import('@mediapipe/tasks-vision');
+      const v = vision as unknown as {
+        FilesetResolver: { forVisionTasks: (w: string) => Promise<unknown> };
+        ImageSegmenter: { createFromOptions: (f: unknown, o: unknown) => Promise<never> };
+      };
+      const fileset = await v.FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
+      );
+      this.segmenter = (await v.ImageSegmenter.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: modelPath, delegate: 'GPU' },
+        runningMode: 'VIDEO',
+        outputCategoryMask: true,
+      })) as unknown as typeof this.segmenter;
+      this.status = 'ready';
+    } catch (e) {
+      this.status = 'error';
+      throw e;
+    }
   }
 
   /** call per frame; internally segments every 2nd frame */
